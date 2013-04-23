@@ -1,0 +1,1 @@
+java -Xmx512M -jar "sbtwrapper/sbt-launch.jar" %*
