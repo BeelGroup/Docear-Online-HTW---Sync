@@ -7,6 +7,6 @@
 ## Run tests
 * `sbt test`
 
-## IDE file generation
+## IDE files generation
 * Eclipse: `sbt eclipse`
 * IntelliJ IDEA: `sbt gen-idea`
