@@ -1,5 +1,7 @@
 import sbt._
 import sbt.Keys._
+import de.johoop.jacoco4sbt._
+import JacocoPlugin._
 
 object Build extends Build {
   
@@ -30,6 +32,9 @@ object Build extends Build {
       , resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
       , libraryDependencies ++= dependencies
       , javacOptions ++= Seq("-target", "1.6") ++ Seq("-source", "1.6")
-    ) ++ seq(com.github.retronym.SbtOneJar.oneJarSettings: _*)
+    ) ++
+      seq(com.github.retronym.SbtOneJar.oneJarSettings: _*) ++
+      seq(jacoco.settings : _*) ++
+      seq(parallelExecution in jacoco.Config := false)
   )
 }

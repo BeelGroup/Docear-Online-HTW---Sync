@@ -8,3 +8,5 @@ resolvers += Resolver.url(
 addSbtPlugin("com.github.retronym" % "sbt-onejar" % "0.8")
 
 addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.1.2")
+
+addSbtPlugin("de.johoop" % "jacoco4sbt" % "2.0.0")

@@ -5,7 +5,8 @@
 * Windows: `sbt "run D:\folderToWatch"`
 
 ## Run tests
-* `sbt test`
+* `sbt jacoco:cover`
+* the test coverage report is in `target/scala-2.10/jacoco/html/index.html`
 
 ## IDE files generation
 * Eclipse: `sbt eclipse`
