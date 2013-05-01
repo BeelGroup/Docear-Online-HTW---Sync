@@ -8,6 +8,6 @@ public class SyncDispatchActor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        logActor.tell(message);
+        logActor.tell(message, getSelf());
     }
 }

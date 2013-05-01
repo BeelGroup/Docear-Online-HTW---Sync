@@ -13,8 +13,9 @@ object Build extends Build {
     , "org.apache.commons" % "commons-lang3" % "3.1" //functions missing in the Java library
     , "commons-io" % "commons-io" % "2.4" //file and stream operations
     , "org.slf4j" % "slf4j-api" % "1.7.5" //logging. logger for classes
-    , "ch.qos.logback" % "logback-classic" % "1.0.3" //configuration of logging
-    , "ch.qos.logback" % "logback-core" % "1.0.3" //configuration of logging
+    , "ch.qos.logback" % "logback-classic" % "1.0.12" //configuration of logging
+    , "ch.qos.logback" % "logback-core" % "1.0.12" //configuration of logging
+    , "uk.org.lidalia" % "sysout-over-slf4j" % "1.0.2" //log System.{out,err}.println to logback
     , "com.novocode" % "junit-interface" % "0.8" % "test->default" //needed by JUnit with SBT
     , "junit" % "junit" % "4.11" % "test" //test suite
     , "org.easytesting" % "fest-assert" % "1.4" % "test"//assertions with better messages
@@ -32,6 +33,8 @@ object Build extends Build {
       , resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
       , libraryDependencies ++= dependencies
       , javacOptions ++= Seq("-target", "1.6") ++ Seq("-source", "1.6")
+      , javacOptions ++= Seq("-Xlint:-options")
+      , javacOptions ++= Seq("-Xlint:deprecation")
     ) ++
       seq(com.github.retronym.SbtOneJar.oneJarSettings: _*) ++
       seq(jacoco.settings : _*) ++

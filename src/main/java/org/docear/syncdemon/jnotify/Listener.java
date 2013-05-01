@@ -39,7 +39,7 @@ public class Listener implements JNotifyListener {
             public DateTime getTimestamp() {
                 return timestamp;
             }
-        });
+        }, recipient);
     }
 
     @Override
