@@ -10,9 +10,7 @@ import java.lang.reflect.Field;
 
 import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
 import static org.apache.commons.io.FileUtils.forceMkdir;
-import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.apache.commons.lang3.SystemUtils.OS_ARCH;
-import static org.apache.commons.lang3.SystemUtils.PATH_SEPARATOR;
+import static org.apache.commons.lang3.SystemUtils.*;
 
 public class NativeLibraryResolver {
     private static final Logger logger = LoggerFactory.getLogger(NativeLibraryResolver.class);
@@ -23,7 +21,13 @@ public class NativeLibraryResolver {
     }
 
     private String nativeLibraryFilename() {
-        return IS_OS_WINDOWS ? (OS_ARCH.contains("64") ? "jnotify_64bit.dll" : "jnotify.dll") : "libjnotify.so";
+        String name = "libjnotify.so";
+        if(IS_OS_WINDOWS) {
+            name = OS_ARCH.contains("64") ? "jnotify_64bit.dll" : "jnotify.dll";
+        } else if (IS_OS_MAC) {
+            name = "libjnotify.jnilib";
+        }
+        return name;
     }
 
     private String nativeLibraryJarPath() {
@@ -44,9 +48,11 @@ public class NativeLibraryResolver {
         } catch (IllegalAccessException e) {
             throw new IOException(e);
         }
-        final InputStream resourceAsStream = getClass().getResourceAsStream(nativeLibraryJarPath());
+        final String libraryPath = nativeLibraryJarPath();
+        logger.debug("loading jnotify library from {}", libraryPath);
+        final InputStream resourceAsStream = getClass().getResourceAsStream(libraryPath);
         if(resourceAsStream == null)
-            throw new RuntimeException("Cannot find jnotify in. {" + nativeLibraryJarPath() + "} of the jnotify JAR");
+            throw new RuntimeException("Cannot find jnotify in. {" + libraryPath + "} of the jnotify JAR");
         final File destination = destinationFileForNativeLibrary();
         copyInputStreamToFile(resourceAsStream, destination);
         destination.setExecutable(true);
@@ -56,7 +62,7 @@ public class NativeLibraryResolver {
         final String oldPath = System.getProperty("java.library.path");
         final String newPath = destinationFolderNativeLibrary.getCanonicalPath() + PATH_SEPARATOR + oldPath;
         System.setProperty("java.library.path", newPath);
-        logger.info("'java.library.path' path is now {}", System.getProperty("java.library.path"));
+        logger.debug("'java.library.path' path is now {}", System.getProperty("java.library.path"));
 
         //hack http://blog.cedarsoft.com/2010/11/setting-java-library-path-programmatically/
         //necessary since "java.library.path" is cached
