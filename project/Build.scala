@@ -27,13 +27,8 @@ object Build extends Build {
       publishMavenStyle := true
       , sources in (Compile, doc) ~= (_ filter (f => false)) //sbt publish does not work with Java settings, i.e.: javadoc: error - invalid flag: -target
       , publishArtifact in Test := false
-      , publishTo <<= version { (v: String) =>
-        if (v.trim.endsWith("SNAPSHOT"))
-          None //Please publish SNAPSHOT releases only to a local repository with `sbt publish-local`.
-        else
-          releaseFolder //Please provide a release directory with `sbt -Drelease.folder=<path> publish`.
-      },
-      pomIncludeRepository := { _ => false }
+      , publishTo := releaseFolder //Please provide a release directory with `sbt -Drelease.folder=<path> publish`.
+      , pomIncludeRepository := { _ => false }
     )
   }
 
