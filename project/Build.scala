@@ -21,11 +21,27 @@ object Build extends Build {
     , "org.easytesting" % "fest-assert" % "1.4" % "test"//assertions with better messages
   )
 
+  lazy val projectReleaseSettings = {
+    lazy val releaseFolder = Option(System.getProperty("release.folder")).map(x => Resolver.file("file", new File(x)))
+    Seq(
+      publishMavenStyle := true
+      , sources in (Compile, doc) ~= (_ filter (f => false)) //sbt publish does not work with Java settings, i.e.: javadoc: error - invalid flag: -target
+      , publishArtifact in Test := false
+      , publishTo <<= version { (v: String) =>
+        if (v.trim.endsWith("SNAPSHOT"))
+          None //Please publish SNAPSHOT releases only to a local repository with `sbt publish-local`.
+        else
+          releaseFolder //Please provide a release directory with `sbt -Drelease.folder=<path> publish`.
+      },
+      pomIncludeRepository := { _ => false }
+    )
+  }
+
   lazy val main = Project(
-    id = "sync-demon",
+    id = "sync-daemon",
     base = file("."),
     settings = Project.defaultSettings ++ Seq(
-      name := "sync-demon"
+      name := "sync-daemon"
       , organization := "org.docear"
       , version := "0.1-SNAPSHOT"
       , scalaVersion := "2.10.0"
@@ -38,6 +54,7 @@ object Build extends Build {
     ) ++
       seq(com.github.retronym.SbtOneJar.oneJarSettings: _*) ++
       seq(jacoco.settings : _*) ++
-      seq(parallelExecution in jacoco.Config := false)
+      seq(parallelExecution in jacoco.Config := false) ++
+      projectReleaseSettings
   )
 }
