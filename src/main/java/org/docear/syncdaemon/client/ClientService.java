@@ -4,7 +4,9 @@ import org.docear.syncdaemon.fileindex.FileMetaData;
 
 public interface ClientService {
     /**
-     * 
+     *
      */
-    FileMetaData getFileMetaData(FileMetaData fileMetaData);
+    UploadResponse upload(FileMetaData fileMetaData);
+
+    void download(FileMetaData currentServerMetaData);
 }
