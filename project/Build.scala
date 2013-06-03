@@ -39,6 +39,7 @@ object Build extends Build {
       name := "sync-daemon"
       , organization := "org.docear"
       , version := "0.1-SNAPSHOT"
+      , crossPaths := false
       , scalaVersion := "2.10.0"
       , resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
       , resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
