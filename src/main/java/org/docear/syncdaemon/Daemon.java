@@ -1,12 +1,32 @@
 package org.docear.syncdaemon;
 
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 public class Daemon {
 
-	
-	
-	public <T extends Plugin> T getPlugin(Class<T> clazz) {
+    private Config config;
+
+    public Daemon() {
+        config = ConfigFactory.load();
+    }
+
+    public Daemon(Config config) {
+        this.config = config;
+    }
+
+    public static Daemon createWithAdditionalConfig(final Config config) {
+        final Daemon daemon = new Daemon();
+        daemon.config = config.withFallback(daemon.config);
+        return daemon;
+    }
+
+    public <T extends Plugin> T plugin(Class<T> clazz) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	public <T> T service(Class<T> clazz) {
 		throw new RuntimeException("Not implemented");
 	}
 	
@@ -22,9 +42,11 @@ public class Daemon {
 		 */
 	}
 	
-	
 	private void onStop() {
 		
 	}
-	
+
+    public Config getConfig() {
+        return config;
+    }
 }
