@@ -3,17 +3,56 @@ package org.docear.syncdaemon;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Constructor;
+import java.util.*;
 
 public class Daemon {
+    private static final Logger logger = LoggerFactory.getLogger(Daemon.class);
 
     private Config config;
+    private List<Plugin> plugins = new LinkedList<Plugin>();
 
     public Daemon() {
-        config = ConfigFactory.load();
+        this(ConfigFactory.load());
     }
 
     public Daemon(Config config) {
         this.config = config;
+        setupPlugins();
+    }
+
+    private void setupPlugins() {
+        final List<Integer> priorities = new LinkedList<Integer>();
+        final Map<Integer, String> priorityToClassNameMap = new HashMap<Integer, String>();
+        for (final String configParts : config.getStringList("daemon.plugins")) {
+            final String[] parts = configParts.split(":");
+            final int priority = Integer.parseInt(parts[0]);
+            priorities.add(priority);
+            final String pluginClassName = parts[1];
+            priorityToClassNameMap.put(priority, pluginClassName);
+        }
+        Collections.sort(priorities);
+        for (final int key : priorities) {
+            final String className = priorityToClassNameMap.get(key);
+            final Plugin plugin = instantiatePlugin(className);
+            plugins.add(plugin);
+        }
+    }
+
+    private Plugin instantiatePlugin(String className) {
+        try {
+            final Class<?> pluginClass = Class.forName(className);
+            Class[] argTypes = {Daemon.class};
+            Constructor constructor = pluginClass.getDeclaredConstructor(argTypes);
+            Object[] arguments = {this};
+            Object instance = constructor.newInstance(arguments);
+            return (Plugin) instance;
+        } catch (Exception e) {
+            throw new RuntimeException("cannot initialize plugin " + className, e);
+        }
     }
 
     public static Daemon createWithAdditionalConfig(final Config config) {
@@ -22,31 +61,48 @@ public class Daemon {
         return daemon;
     }
 
-    public <T extends Plugin> T plugin(Class<T> clazz) {
-		throw new RuntimeException("Not implemented");
-	}
+    public <T> T plugin(Class<T> clazz) {
+        for (final Plugin plugin : plugins) {
+            if (clazz.isInstance(plugin)) {
+                return (T)plugin;
+            }
+        }
+        return null;
+    }
 
 	public <T> T service(Class<T> clazz) {
 		throw new RuntimeException("Not implemented");
 	}
 	
-	private void onStart() {
-		/**
-		 * - Actor System for internal and external communication
-		 * - RUNNING_PID with PID 
-		 * - RUNNING_PORT with port of actor system
-		 * - initialize index-db
-		 * - initialize file system
-		 *   - start jNotify
-		 * - refresh index
-		 */
-	}
-	
-	private void onStop() {
-		
+	public void onStart() {
+        for (final Plugin plugin : plugins) {
+            if (plugin.enabled()) {
+                plugin.onStart();
+            }
+        }
+        /**
+         * - Actor System for internal and external communication
+         * - RUNNING_PID with PID
+         * - RUNNING_PORT with port of actor system
+         * - initialize index-db
+         * - initialize file system
+         *   - start jNotify
+         * - refresh index
+         */
+    }
+
+    public void onStop() {
+        for (final Plugin plugin : plugins) {
+            plugin.onStop();
+        }
 	}
 
     public Config getConfig() {
         return config;
+    }
+
+    /* in package scope for testing */
+    void addPlugin(Plugin plugin) {
+        plugins.add(plugin);
     }
 }

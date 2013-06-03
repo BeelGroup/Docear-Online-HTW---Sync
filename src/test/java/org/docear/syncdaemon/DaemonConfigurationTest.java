@@ -2,11 +2,17 @@ package org.docear.syncdaemon;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.docear.syncdaemon.logging.LoggingPlugin;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.fest.assertions.Assertions.assertThat;
 
-public class DaemonTest {
+public class DaemonConfigurationTest {
+    private static final Logger logger = LoggerFactory.getLogger(Daemon.class);
+
+
     @Test
     public void testGetConfigurationFromClasspath() throws Exception {
         final Daemon daemon = new Daemon();
@@ -21,6 +27,12 @@ public class DaemonTest {
         final Daemon daemon = Daemon.createWithAdditionalConfig(overWritingConfig);
         assertDaemonNameIsCorrect(daemon);
         assertBaseUrl(daemon, baseUrl);
+    }
+
+    @Test
+    public void testFindPluginSettingsInConfigFile() throws Exception {
+        final LoggingPlugin plugin = new Daemon().plugin(LoggingPlugin.class);
+        assertThat(plugin).overridingErrorMessage("logging plugin not found").isNotNull();
     }
 
     private void assertBaseUrl(Daemon daemon, String baseUrl) {
