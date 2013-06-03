@@ -41,7 +41,7 @@ public class Main {
                     JNotify.FILE_RENAMED;
             boolean watchSubtree = true;
             forceMkdir(new File(folderToWatch));
-            int watchID = JNotify.addWatch(folderToWatch, mask, watchSubtree, new Listener(dispatcher));
+            int watchID = JNotify.addWatch(folderToWatch, mask, watchSubtree, new Listener(TODO, dispatcher));
             logger.info("watching " + folderToWatch);
             Thread.sleep(5000000);
         } catch (UnsatisfiedLinkError e) {
