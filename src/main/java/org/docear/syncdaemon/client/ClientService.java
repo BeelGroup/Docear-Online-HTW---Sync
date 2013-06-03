@@ -1,5 +1,10 @@
 package org.docear.syncdaemon.client;
 
-public interface ClientService {
+import org.docear.syncdaemon.fileindex.FileMetaData;
 
+public interface ClientService {
+    /**
+     * 
+     */
+    FileMetaData getFileMetaData(FileMetaData fileMetaData);
 }

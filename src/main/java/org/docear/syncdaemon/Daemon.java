@@ -1,12 +1,12 @@
 package org.docear.syncdaemon;
 
-
-
 public class Daemon {
 
-	
-	
-	public <T extends Plugin> T getPlugin(Class<T> clazz) {
+	public <T extends Plugin> T plugin(Class<T> clazz) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	public <T> T service(Class<T> clazz) {
 		throw new RuntimeException("Not implemented");
 	}
 	
@@ -22,9 +22,7 @@ public class Daemon {
 		 */
 	}
 	
-	
 	private void onStop() {
 		
 	}
-	
 }
