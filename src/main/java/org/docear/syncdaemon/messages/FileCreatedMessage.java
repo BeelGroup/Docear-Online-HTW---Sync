@@ -1,4 +1,4 @@
-package org.docear.syncdemon.messages;
+package org.docear.syncdaemon.messages;
 
 import com.google.common.base.Objects;
 import org.joda.time.DateTime;

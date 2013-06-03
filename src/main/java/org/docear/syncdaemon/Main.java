@@ -1,13 +1,14 @@
-package org.docear.syncdemon;
+package org.docear.syncdaemon;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import net.contentobjects.jnotify.JNotify;
-import org.docear.syncdemon.actors.LogActor;
-import org.docear.syncdemon.actors.SyncDispatchActor;
-import org.docear.syncdemon.jnotify.Listener;
-import org.docear.syncdemon.jnotify.NativeLibraryResolver;
+
+import org.docear.syncdaemon.actors.LogActor;
+import org.docear.syncdaemon.actors.SyncDispatchActor;
+import org.docear.syncdaemon.jnotify.Listener;
+import org.docear.syncdaemon.jnotify.NativeLibraryResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;

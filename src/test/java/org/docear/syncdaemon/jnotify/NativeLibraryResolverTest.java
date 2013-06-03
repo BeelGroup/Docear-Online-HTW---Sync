@@ -1,5 +1,6 @@
-package org.docear.syncdemon.jnotify;
+package org.docear.syncdaemon.jnotify;
 
+import org.docear.syncdaemon.jnotify.NativeLibraryResolver;
 import org.fest.assertions.Condition;
 import org.junit.Test;
 

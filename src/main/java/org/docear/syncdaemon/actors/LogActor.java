@@ -1,7 +1,8 @@
-package org.docear.syncdemon.actors;
+package org.docear.syncdaemon.actors;
 
 import akka.actor.UntypedActor;
-import org.docear.syncdemon.messages.FileCreatedMessage;
+
+import org.docear.syncdaemon.messages.FileCreatedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

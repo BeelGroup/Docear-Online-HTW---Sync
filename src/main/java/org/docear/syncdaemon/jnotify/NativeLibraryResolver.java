@@ -1,4 +1,4 @@
-package org.docear.syncdemon.jnotify;
+package org.docear.syncdaemon.jnotify;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

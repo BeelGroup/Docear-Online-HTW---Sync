@@ -1,4 +1,4 @@
-package org.docear.syncdemon.actors;
+package org.docear.syncdaemon.actors;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;

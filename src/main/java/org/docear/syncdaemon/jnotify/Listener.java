@@ -1,8 +1,9 @@
-package org.docear.syncdemon.jnotify;
+package org.docear.syncdaemon.jnotify;
 
 import akka.actor.ActorRef;
 import net.contentobjects.jnotify.JNotifyListener;
-import org.docear.syncdemon.messages.FileCreatedMessage;
+
+import org.docear.syncdaemon.messages.FileCreatedMessage;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
