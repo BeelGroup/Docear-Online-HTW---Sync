@@ -2,6 +2,7 @@ package org.docear.syncdaemon.fileindex;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,19 +26,19 @@ public class FileReceiver {
 		File root = new File(project.getRootPath());
 		Collection<File> fileCollection = FileUtils.listFilesAndDirs(root, TrueFileFilter.INSTANCE, DirectoryFileFilter.DIRECTORY);
 		for (File f : fileCollection){
-			logger.info("Processing file \"" + f.getName() + "\"");
+			logger.debug("Processing file \"" + f.getName() + "\"");
 			if (f.equals(root)){
 				continue;
 			}
 			String hash = null;
-			try {
+			/*try {
 				if (f.isFile()) {
 					hash = hashAlgo.generate(f);
 				}
-			} catch (FileNotFoundException e){
+			} catch (IOException e){
 				logger.error(e.toString());
 				continue;
-			}
+			}*/
 			FileMetaData fmd = new FileMetaData(f.getAbsolutePath(), hash, project.getId(), f.isDirectory(), false, -1);
 			files.add(fmd);
 		}
