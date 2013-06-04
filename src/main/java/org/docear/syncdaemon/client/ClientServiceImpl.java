@@ -50,256 +50,6 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 		serviceUrl = config.getString("daemon.client.baseurl") + "/" + config.getString("daemon.client.api.version");
 	}
 
-	// @Override
-	// @Deprecated
-	// public Future<User> login(final String username, final String password) {
-	// final WebResource loginResource =
-	// restClient.resource(serviceUrl).path("user/login");
-	// MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-	// formData.add("username", username);
-	// formData.add("password", password);
-	// final ClientResponse loginResponse =
-	// loginResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class,
-	// formData);
-	//
-	// if (loginResponse.getStatus() == 200) {
-	// final User user = new User(username,
-	// loginResponse.getEntity(String.class));
-	// return Futures.successful(user);
-	// } else {
-	// return null;
-	// }
-	// }
-	//
-	// @Override
-	// public Future<Boolean> listenIfUpdatesOccur(final User user, final
-	// MapIdentifier mapIdentifier) {
-	// return Futures.future(new Callable<Boolean>() {
-	//
-	// @Override
-	// public Boolean call() throws Exception {
-	// final WebResource resource = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/listen");
-	//
-	// final ClientResponse loginResponse = resource.get(ClientResponse.class);
-	// return loginResponse.getStatus() == 200;
-	// }
-	// }, clientController.system().dispatcher());
-	//
-	// }
-	//
-	// @Override
-	// public Future<JsonNode> getMapAsXml(final User user, final MapIdentifier
-	// mapIdentifier) {
-	//
-	// try {
-	// final WebResource mapAsXmlResource =
-	// preparedResource(user).path("project/" + mapIdentifier.getProjectId() +
-	// "/map/" + mapIdentifier.getMapId() + "/xml");
-	// final JsonNode response = new
-	// ObjectMapper().readTree(mapAsXmlResource.get(String.class));
-	// return Futures.successful(response);
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// return Futures.failed(e);
-	// }
-	//
-	// }
-	//
-	// @Override
-	// public Future<GetUpdatesResponse> getUpdatesSinceRevision(final User
-	// user, final MapIdentifier mapIdentifier, final int sinceRevision) {
-	//
-	// int currentRevision = -1;
-	// List<MapUpdate> updates = new ArrayList<MapUpdate>();
-	// final WebResource fetchUpdates = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/updates/" + sinceRevision);
-	// final ClientResponse response = fetchUpdates.get(ClientResponse.class);
-	// final ObjectMapper mapper = new ObjectMapper();
-	// try {
-	// JsonNode json = mapper.readTree(response.getEntity(String.class));
-	// currentRevision = json.get("currentRevision").asInt();
-	//
-	// Iterator<JsonNode> it = json.get("orderedUpdates").iterator();
-	// while (it.hasNext()) {
-	// final JsonNode mapUpdateJson = it.next();
-	//
-	// final MapUpdate.Type type =
-	// MapUpdate.Type.valueOf(mapUpdateJson.get("type").asText());
-	// switch (type) {
-	// case AddNode:
-	// updates.add(mapper.treeToValue(mapUpdateJson, AddNodeUpdate.class));
-	// break;
-	// case ChangeNodeAttribute:
-	// updates.add(mapper.treeToValue(mapUpdateJson,
-	// ChangeNodeAttributeUpdate.class));
-	// break;
-	// case DeleteNode:
-	// updates.add(mapper.treeToValue(mapUpdateJson, DeleteNodeUpdate.class));
-	// break;
-	// case MoveNode:
-	// updates.add(mapper.treeToValue(mapUpdateJson, MoveNodeUpdate.class));
-	// break;
-	// case ChangeEdgeAttribute:
-	// updates.add(mapper.treeToValue(mapUpdateJson,
-	// ChangeEdgeAttributeUpdate.class));
-	// break;
-	//
-	// }
-	//
-	// }
-	// } catch (Exception e) {
-	// return Futures.failed(e);
-	// }
-	// return Futures.successful(new GetUpdatesResponse(currentRevision,
-	// updates));
-	//
-	// }
-	//
-	// @Override
-	// public Future<String> createNode(final User user, final MapIdentifier
-	// mapIdentifier, final String parentNodeId) {
-	//
-	// final WebResource resource = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/node/create");
-	// final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-	// formData.add("parentNodeId", parentNodeId);
-	//
-	// final ClientResponse response = resource.post(ClientResponse.class,
-	// formData);
-	// try {
-	// final AddNodeUpdate update = new
-	// ObjectMapper().readValue(response.getEntity(String.class),
-	// AddNodeUpdate.class);
-	// return Futures.successful(update.getNewNodeId());
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// return Futures.failed(e);
-	// }
-	// }
-	//
-	// @Override
-	// public Future<Boolean> moveNodeTo(final User user, final MapIdentifier
-	// mapIdentifier, final String newParentId, final String nodeToMoveId, final
-	// int newIndex) {
-	// final WebResource resource = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/node/move");
-	// final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-	// formData.add("newParentNodeId", newParentId);
-	// formData.add("nodetoMoveId", nodeToMoveId);
-	// formData.add("newIndex", newIndex + "");
-	//
-	// final ClientResponse response = resource.post(ClientResponse.class,
-	// formData);
-	// LogUtils.info("Status: " + response.getStatus());
-	// return Futures.successful(response.getStatus() == 200);
-	//
-	// }
-	//
-	// @Override
-	// public Future<Boolean> removeNode(final User user, final MapIdentifier
-	// mapIdentifier, final String nodeId) {
-	//
-	// final WebResource resource = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/node/delete");
-	// final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-	// formData.add("nodeId", nodeId);
-	//
-	// ClientResponse response = resource.delete(ClientResponse.class,
-	// formData);
-	//
-	// LogUtils.info("Status: " + response.getStatus());
-	// return Futures.successful(response.getStatus() == 200);
-	//
-	// }
-	//
-	// @Override
-	// public Future<Boolean> changeNode(final User user, final MapIdentifier
-	// mapIdentifier, final String nodeId, final String attribute, final Object
-	// value) {
-	// try {
-	// final WebResource resource = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/node/change");
-	// final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-	// formData.add("nodeId", nodeId);
-	// formData.add(attribute, value == null ? null : value.toString());
-	//
-	// LogUtils.info("locking node");
-	// // boolean isLocked =
-	// boolean isLocked = Await.result(lockNode(user, mapIdentifier, nodeId),
-	// Duration.create("5 seconds"));
-	// if (!isLocked)
-	// return Futures.successful(false);
-	// LogUtils.info("changing");
-	// ClientResponse response = resource.post(ClientResponse.class, formData);
-	// LogUtils.info("releasing node");
-	// releaseNode(user, mapIdentifier, nodeId);
-	//
-	// LogUtils.info("Status: " + response.getStatus());
-	// return Futures.successful(response.getStatus() == 200);
-	//
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// return Futures.failed(e);
-	// }
-	// }
-	//
-	// @Override
-	// public Future<Boolean> changeEdge(final User user, final MapIdentifier
-	// mapIdentifier, String nodeId, String attribute, Object value) {
-	// try {
-	// final WebResource resource = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/node/changeEdge");
-	// final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-	// formData.add("nodeId", nodeId);
-	// formData.add(attribute, value.toString());
-	//
-	// LogUtils.info("changing");
-	// ClientResponse response = resource.post(ClientResponse.class, formData);
-	//
-	// LogUtils.info("Status: " + response.getStatus());
-	// return Futures.successful(response.getStatus() == 200);
-	//
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// return Futures.failed(e);
-	// }
-	// }
-	//
-	// private Future<Boolean> lockNode(final User user, final MapIdentifier
-	// mapIdentifier, final String nodeId) {
-	// final WebResource resource = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/node/requestLock");
-	// final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-	// formData.add("nodeId", nodeId);
-	//
-	// ClientResponse response = resource.post(ClientResponse.class, formData);
-	// LogUtils.info("Status: " + response.getStatus());
-	// return Futures.successful(response.getStatus() == 200);
-	// }
-	//
-	// private Future<Boolean> releaseNode(final User user, final MapIdentifier
-	// mapIdentifier, final String nodeId) {
-	// final WebResource resource = preparedResource(user).path("project/" +
-	// mapIdentifier.getProjectId() + "/map/" + mapIdentifier.getMapId() +
-	// "/node/releaseLock");
-	// final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-	// formData.add("nodeId", nodeId);
-	//
-	// ClientResponse response = resource.post(ClientResponse.class, formData);
-	//
-	// LogUtils.info("Status: " + response.getStatus());
-	// return Futures.successful(response.getStatus() == 200);
-	// }
-
 	// ClientService implementation
 	@Override
 	public UploadResponse upload(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException {
@@ -346,7 +96,16 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
 	@Override
 	public ProjectResponse getProjects(User user) {
-		throw new RuntimeException("Not implemented.");
+		// create request
+		final WebResource request = preparedResource(user).path("projects");
+
+		ClientResponse response = request.get(ClientResponse.class);
+
+		// on success
+		if (response.getStatus() == 200)
+			return new ProjectResponse(serverProjectListToLocalProject(response.getEntity(String.class)));
+		else
+			return null;
 	}
 
 	@Override
@@ -393,12 +152,18 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
 	// private methods
 
+	private WebResource preparedResource(User user) {
+		return restClient.resource(serviceUrl).path("user") // path
+				// authentication
+				.queryParam("username", user.getUsername()).queryParam("accessToken", user.getAccessToken());
+	}
+
 	private WebResource preparedResource(String projectId, User user) {
 		return restClient.resource(serviceUrl).path("project").path(projectId) // path
 				// authentication
 				.queryParam("username", user.getUsername()).queryParam("accessToken", user.getAccessToken());
 	}
-	
+
 	/**
 	 * converts "\" to "/" and encodes to UTF-8
 	 */
@@ -434,7 +199,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
 	private FileMetaData serverMetadataToLocalFileMetaData(String projectId, String metadata) {
 		try {
-			
+
 			final JsonNode metaJson = new ObjectMapper().readTree(metadata);
 			final String path = metaJson.get("path").textValue();
 			final Long revision = metaJson.get("revision").longValue();
@@ -443,6 +208,26 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 			// final Long bytes = metaJson.get("bytes").longValue();
 			final String hash = metaJson.get("hash").textValue();
 			return new FileMetaData(path, hash, projectId, dir, deleted, revision);
+		} catch (Exception e) {
+			throw new RuntimeException("Invalid server metadata object.", e);
+		}
+	}
+
+	private List<Project> serverProjectListToLocalProject(String project) {
+		try {
+			final List<Project> projects = new ArrayList<Project>();
+			for (final JsonNode projectJson : new ObjectMapper().readTree(project)) {
+				final String id = projectJson.get("id").textValue();
+				// final String name = metaJson.get("name").textValue();
+				final Long revision = projectJson.get("revision").longValue();
+				final List<String> user = new ArrayList<String>();
+				for (JsonNode node : projectJson.get("authorizedUsers")) {
+					user.add(node.toString());
+				}
+
+				projects.add(new Project(id, "", revision));
+			}
+			return projects;
 		} catch (Exception e) {
 			throw new RuntimeException("Invalid server metadata object.", e);
 		}
