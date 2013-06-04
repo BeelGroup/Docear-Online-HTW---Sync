@@ -19,12 +19,12 @@ public class DaemonConfigurationTest {
     public void testGetConfigurationFromClasspath() throws Exception {
         final Daemon daemon = new Daemon();
         assertDaemonNameIsCorrect(daemon);
-        assertBaseUrl(daemon, "https://my.docear.org");
+        assertBaseUrl(daemon, "http://localhost:9000");
     }
 
     @Test
     public void testGetConfigurationWithInjected() throws Exception {
-        final String baseUrl = "http://localhost:9000";
+        final String baseUrl = "https://my.docear.org";
         final Config overWritingConfig = ConfigFactory.parseString("daemon.client.baseurl=\"" + baseUrl + "\"");
         final Daemon daemon = Daemon.createWithAdditionalConfig(overWritingConfig);
         assertDaemonNameIsCorrect(daemon);
