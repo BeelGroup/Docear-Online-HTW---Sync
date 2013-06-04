@@ -13,6 +13,10 @@ public final class TestUtils {
         return daemon;
     }
 
+    public static Daemon testDaemon() {
+        return testDaemonWithAdditionalConfiguration("");
+    }
+
     public static String diSetting(final Class interfaceClass, final Class implClass) {
         return String.format("daemon.di.%s=%s", interfaceClass.getName(), implClass.getName());
     }

@@ -45,3 +45,5 @@ tmp
 !gradle-wrapper.jar
 !sbtwrapper/sbt-launch.jar
 julius.conf
+/libjn*
+/jnotify*
