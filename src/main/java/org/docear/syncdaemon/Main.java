@@ -1,23 +1,25 @@
 package org.docear.syncdaemon;
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
+import static org.apache.commons.io.FileUtils.forceMkdir;
+import static org.apache.commons.io.FileUtils.getUserDirectory;
+
+import java.io.File;
+import java.io.IOException;
+
 import net.contentobjects.jnotify.JNotify;
 
 import org.docear.syncdaemon.actors.LogActor;
 import org.docear.syncdaemon.actors.SyncDispatchActor;
 import org.docear.syncdaemon.jnotify.Listener;
 import org.docear.syncdaemon.jnotify.NativeLibraryResolver;
+import org.docear.syncdaemon.projects.Project;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
-
-import java.io.File;
-import java.io.IOException;
-
-import static org.apache.commons.io.FileUtils.forceMkdir;
-import static org.apache.commons.io.FileUtils.getUserDirectory;
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -33,6 +35,8 @@ public class Main {
         final Logger logger = LoggerFactory.getLogger(Main.class);
         SysOutOverSLF4J.sendSystemOutAndErrToSLF4J();
         final ActorRef dispatcher = initializeDispatchActor();
+        // TODO generate real Project
+        final Project project = new Project("-1", folderToWatch, -1);
         initializeJnotifyNativeLibraries();
         try {
             int mask = JNotify.FILE_CREATED |
@@ -41,7 +45,7 @@ public class Main {
                     JNotify.FILE_RENAMED;
             boolean watchSubtree = true;
             forceMkdir(new File(folderToWatch));
-            int watchID = JNotify.addWatch(folderToWatch, mask, watchSubtree, new Listener(dispatcher));
+            int watchID = JNotify.addWatch(folderToWatch, mask, watchSubtree, new Listener(project, dispatcher));
             logger.info("watching " + folderToWatch);
             Thread.sleep(5000000);
         } catch (UnsatisfiedLinkError e) {
