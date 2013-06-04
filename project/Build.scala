@@ -20,6 +20,12 @@ object Build extends Build {
     , "com.novocode" % "junit-interface" % "0.8" % "test->default" //needed by JUnit with SBT
     , "junit" % "junit" % "4.11" % "test" //test suite
     , "org.easytesting" % "fest-assert" % "1.4" % "test"//assertions with better messages
+    , "com.sun.jersey" % "jersey-core" % "1.17.1"
+    , "com.sun.jersey" % "jersey-client" % "1.17.1"
+    , "com.sun.jersey.contribs" % "jersey-apache-client" % "1.17.1"
+    ,"com.fasterxml.jackson.core" % "jackson-core" % "2.1.4"
+	,"com.fasterxml.jackson.core" % "jackson-annotations" % "2.1.4"
+    ,"com.fasterxml.jackson.core" % "jackson-databind" % "2.1.4"
   )
 
   lazy val projectReleaseSettings = {

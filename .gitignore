@@ -44,3 +44,4 @@ tmp
 !.gitignore
 !gradle-wrapper.jar
 !sbtwrapper/sbt-launch.jar
+julius.conf

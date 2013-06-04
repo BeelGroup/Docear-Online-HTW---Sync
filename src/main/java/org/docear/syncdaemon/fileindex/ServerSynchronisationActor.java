@@ -1,10 +1,12 @@
 package org.docear.syncdaemon.fileindex;
 
-import akka.actor.UntypedActor;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.UploadResponse;
 import org.docear.syncdaemon.fileindex.messages.LocalFileChanged;
 import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.projects.Project;
+
+import akka.actor.UntypedActor;
 
 public class ServerSynchronisationActor extends UntypedActor {
 
@@ -21,7 +23,8 @@ public class ServerSynchronisationActor extends UntypedActor {
         if (message instanceof LocalFileChanged) {
             //TODO with dispatcher
             final FileMetaData fileMetaData = ((LocalFileChanged) message).getFileMetaData();
-            final UploadResponse uploadResponse = clientService.upload(fileMetaData);
+            final Project project = ((LocalFileChanged) message).getProject();
+            final UploadResponse uploadResponse = clientService.upload(project, fileMetaData);
             if (uploadResponse.hasConflicts()) {
                 //TODO rename conflicted file
                 //TODO suppress jNotify events for download
