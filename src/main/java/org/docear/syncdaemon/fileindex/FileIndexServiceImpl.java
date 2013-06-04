@@ -2,8 +2,10 @@ package org.docear.syncdaemon.fileindex;
 
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.client.ClientService;
+import org.docear.syncdaemon.client.ClientServiceImpl;
 import org.docear.syncdaemon.client.FolderMetaData;
 import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.indexdb.IndexDbServiceImpl;
 import org.docear.syncdaemon.projects.Project;
 
 public class FileIndexServiceImpl implements FileIndexService {
@@ -14,8 +16,8 @@ public class FileIndexServiceImpl implements FileIndexService {
 	
 	public FileIndexServiceImpl(Daemon daemon){
 		this.daemon = daemon;
-		clientService = daemon.service(ClientService.class);
-		indexDbService = daemon.service(IndexDbService.class);
+		clientService = daemon.service(ClientServiceImpl.class);
+		indexDbService = daemon.service(IndexDbServiceImpl.class);
 	}
 	
 	@Override

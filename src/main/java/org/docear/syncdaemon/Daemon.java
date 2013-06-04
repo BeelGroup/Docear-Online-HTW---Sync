@@ -64,13 +64,21 @@ public class Daemon {
         return daemon;
     }
 
-    public <T> T plugin(Class<T> clazz) {
+    public <T extends Plugin> T plugin(Class<T> clazz) {
         for (final Plugin plugin : plugins) {
             if (clazz.isInstance(plugin)) {
                 return (T)plugin;
             }
         }
         return null;
+    }
+    
+    public <T extends Plugin> T addPluginByClass(Class<T> clazz){
+    	T t = plugin(clazz);
+    	if (t != null) {
+    		addPlugin(t);
+    	}
+    	return t;
     }
 
 	public <T> T service(Class<T> clazz) {

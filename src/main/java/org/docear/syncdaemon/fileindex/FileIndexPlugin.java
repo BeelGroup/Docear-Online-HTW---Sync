@@ -25,5 +25,6 @@ public class FileIndexPlugin extends Plugin{
 
 	@Override
 	public void onStop() {
+	
 	}
 }
