@@ -22,4 +22,16 @@ public class Project {
     public long getRevision() {
 		return revision;
 	}
+    
+    public String toRelativePath(final String path) {
+    	return toProjectRelativePath(this.rootPath, path);
+    }
+    
+    public static String toProjectRelativePath(final String rootPath, final String path) {
+    	if (!path.startsWith(rootPath)){
+    		return null;
+    	} else {
+	    	return path.substring(rootPath.length());
+    	}
+    }
 }

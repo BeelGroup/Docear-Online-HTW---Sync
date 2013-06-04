@@ -48,12 +48,8 @@ public class Listener implements JNotifyListener {
     }
 
     private void sendMessage(final String rootPath, final String name) {
-        final String projectRelativePath = toProjectRelativePath(rootPath, name);
+        final String projectRelativePath = Project.toProjectRelativePath(rootPath, name);
         final FileChangeEvent message = new FileChangeEvent(projectRelativePath, project.getId());
         recipient.tell(message, recipient);
-    }
-
-    private String toProjectRelativePath(final String rootPath, final String name) {
-        throw new RuntimeException("Not implemented");
     }
 }
