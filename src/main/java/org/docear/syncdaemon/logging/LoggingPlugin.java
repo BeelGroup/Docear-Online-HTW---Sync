@@ -14,11 +14,20 @@ public class LoggingPlugin extends Plugin {
 
     @Override
     public void onStart() {
-        logger.info("daemon starts");
+        logger.info(name() + " starts");
+        logger.info("baseurl=" + baseUrl());
     }
 
     @Override
     public void onStop() {
-        logger.info("daemon stops");
+        logger.info(name() + " stops");
+    }
+
+    private String baseUrl() {
+        return daemon().getConfig().getString("daemon.client.baseurl");
+    }
+
+    private String name() {
+        return daemon().getConfig().getString("daemon.name");
     }
 }

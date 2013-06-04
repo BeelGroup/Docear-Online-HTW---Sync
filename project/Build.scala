@@ -52,6 +52,9 @@ object Build extends Build {
       , javacOptions ++= Seq("-target", "1.6") ++ Seq("-source", "1.6")
       , javacOptions ++= Seq("-Xlint:-options")
       , javacOptions ++= Seq("-Xlint:deprecation")
+      , initialize in Runtime ~= { _ =>
+        System.setProperty("started_with_sbt", "true")
+      }
     ) ++
       seq(com.github.retronym.SbtOneJar.oneJarSettings: _*) ++
       seq(jacoco.settings : _*) ++
