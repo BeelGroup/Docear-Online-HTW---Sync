@@ -8,7 +8,7 @@ public abstract class Plugin {
 		this.daemon = daemon;
 	}
 
-	protected Daemon getDaemon() {
+	protected Daemon daemon() {
 		return daemon;
 	}
 	
