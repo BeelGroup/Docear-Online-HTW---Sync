@@ -10,13 +10,13 @@ public interface ClientService {
     /**
      *
      */
-    UploadResponse upload(Project project, FileMetaData fileMetaData) throws FileNotFoundException;
-    void download(FileMetaData currentServerMetaData);
+    UploadResponse upload(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException;
+    void download(User user, FileMetaData currentServerMetaData);
     ProjectResponse getProjects(User user);
-    FolderMetaData getFolderMetaData(FileMetaData folderMetaData);
+    FolderMetaData getFolderMetaData(User user, FileMetaData folderMetaData);
     
     /**
      * @return {@link FileMetaData} or <code>null</code> if not present
      */
-    FileMetaData getCurrentFileMetaData(FileMetaData fileMetaData);
+    FileMetaData getCurrentFileMetaData(User user, FileMetaData fileMetaData);
 }

@@ -25,10 +25,11 @@ public class FileIndexServiceImpl implements FileIndexService {
 		long localRev = indexDbService.getProjectRevision(project.getId());
 		
 		if (localRev != project.getRevision()){
-			
 			//
 			FileMetaData rootMetaData = new FileMetaData(project.getId(), ".", false);
-			FolderMetaData root = clientService.getFolderMetaData(rootMetaData);
+			
+			//TODO user credentials required to use clientService
+			//FolderMetaData root = clientService.getFolderMetaData(rootMetaData);
 			
 			
 			

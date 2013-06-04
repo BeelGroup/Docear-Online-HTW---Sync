@@ -302,7 +302,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
 	// ClientService implementation
 	@Override
-	public UploadResponse upload(Project project, FileMetaData fileMetaData) throws FileNotFoundException {
+	public UploadResponse upload(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException {
 		final String projectId = fileMetaData.getProjectId();
 		// validation
 		if (!project.getId().equals(projectId)) {
@@ -317,7 +317,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 			InputStream fileInStream = new FileInputStream(absoluteFilePath);
 
 			// create request
-			final WebResource request = preparedResource(fileMetaData.getProjectId()).path("file").path(urlEncodedFilePath).queryParam("parentRev", "" + fileMetaData.getRevision())
+			final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("file").path(urlEncodedFilePath).queryParam("parentRev", "" + fileMetaData.getRevision())
 					.queryParam("isZip", "false");
 
 			ClientResponse response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
@@ -330,7 +330,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 			} else {
 				// conflict!
 				// get additional fileMetaData for original file
-				final FileMetaData currentOriMetaData = getCurrentFileMetaData(fileMetaData);
+				final FileMetaData currentOriMetaData = getCurrentFileMetaData(user, fileMetaData);
 				return new UploadResponse(currentOriMetaData, newFileMeta);
 			}
 
@@ -340,7 +340,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 	}
 
 	@Override
-	public void download(FileMetaData currentServerMetaData) {
+	public void download(User user, FileMetaData currentServerMetaData) {
 		throw new RuntimeException("Not implemented.");
 	}
 
@@ -350,12 +350,12 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 	}
 
 	@Override
-	public FolderMetaData getFolderMetaData(FileMetaData folderMetaData) {
+	public FolderMetaData getFolderMetaData(User user, FileMetaData folderMetaData) {
 		final String projectId = folderMetaData.getProjectId();
 
 		final String urlEncodedFilePath = normalizePath(folderMetaData.getPath());
 		// create request
-		final WebResource request = preparedResource(projectId).path("metadata").path(urlEncodedFilePath);
+		final WebResource request = preparedResource(projectId, user).path("metadata").path(urlEncodedFilePath);
 
 		ClientResponse response = request.get(ClientResponse.class);
 
@@ -367,12 +367,12 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 	}
 
 	@Override
-	public FileMetaData getCurrentFileMetaData(FileMetaData fileMetaData) {
+	public FileMetaData getCurrentFileMetaData(User user, FileMetaData fileMetaData) {
 		final String projectId = fileMetaData.getProjectId();
 
 		final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
 		// create request
-		final WebResource request = preparedResource(fileMetaData.getProjectId()).path("metadata").path(urlEncodedFilePath);
+		final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("metadata").path(urlEncodedFilePath);
 
 		ClientResponse response = request.get(ClientResponse.class);
 
@@ -393,20 +393,12 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
 	// private methods
 
-	private WebResource preparedResource(String projectId) {
+	private WebResource preparedResource(String projectId, User user) {
 		return restClient.resource(serviceUrl).path("project").path(projectId) // path
 				// authentication
-				.queryParam("username", username()).queryParam("accessToken", accessToken());
+				.queryParam("username", user.getUsername()).queryParam("accessToken", user.getAccessToken());
 	}
-
-	private String username() {
-		return config.getString("daemon.client.user.name");
-	}
-
-	private String accessToken() {
-		return config.getString("daemon.client.user.token");
-	}
-
+	
 	/**
 	 * converts "\" to "/" and encodes to UTF-8
 	 */

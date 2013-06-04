@@ -24,11 +24,14 @@ public class ServerSynchronisationActor extends UntypedActor {
             //TODO with dispatcher
             final FileMetaData fileMetaData = ((LocalFileChanged) message).getFileMetaData();
             final Project project = ((LocalFileChanged) message).getProject();
-            final UploadResponse uploadResponse = clientService.upload(project, fileMetaData);
+            
+            //TODO user credentials required to use clientService
+            final UploadResponse uploadResponse = null; //clientService.upload(project, fileMetaData);
             if (uploadResponse.hasConflicts()) {
                 //TODO rename conflicted file
                 //TODO suppress jNotify events for download
-                clientService.download(uploadResponse.getCurrentServerMetaData());
+            	//TODO user credentials required to use clientService
+                //clientService.download(uploadResponse.getCurrentServerMetaData());
                 indexDbService.save(uploadResponse.getConflictedServerMetaData());
             }
             indexDbService.save(uploadResponse.getCurrentServerMetaData());
