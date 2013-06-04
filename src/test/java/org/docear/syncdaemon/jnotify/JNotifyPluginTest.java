@@ -4,6 +4,7 @@ import net.contentobjects.jnotify.JNotify;
 import net.contentobjects.jnotify.JNotifyListener;
 import org.apache.commons.io.FileUtils;
 import org.docear.syncdaemon.Daemon;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -13,6 +14,7 @@ import static org.fest.assertions.Assertions.assertThat;
 
 public class JNotifyPluginTest {
     @Test
+    @Ignore
     public void testJNotifyIsActive() throws Exception {
         final Daemon daemon = testDaemon();
         daemon.onStart();
