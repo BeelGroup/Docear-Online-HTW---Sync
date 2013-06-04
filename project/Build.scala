@@ -2,6 +2,7 @@ import sbt._
 import sbt.Keys._
 import de.johoop.jacoco4sbt._
 import JacocoPlugin._
+import sbt.Tests.Setup
 
 object Build extends Build {
   
@@ -52,6 +53,22 @@ object Build extends Build {
       , javacOptions ++= Seq("-target", "1.6") ++ Seq("-source", "1.6")
       , javacOptions ++= Seq("-Xlint:-options")
       , javacOptions ++= Seq("-Xlint:deprecation")
+      , initialize in Runtime ~= { _ =>
+        System.setProperty("started_with_sbt", "true")//used to wire in correct config file
+      }
+      , testOptions += Setup( cl =>
+        /*
+        used to fix the following problem:
+        SLF4J: The following loggers will not work because they were created
+        SLF4J: during the default configuration phase of the underlying logging system.
+        SLF4J: See also http://www.slf4j.org/codes.html#substituteLogger
+
+        see http://stackoverflow.com/questions/7898273/how-to-get-logging-working-in-scala-unit-tests-with-testng-slf4s-and-logback
+         */
+        cl.loadClass("org.slf4j.LoggerFactory").
+          getMethod("getLogger",cl.loadClass("java.lang.String")).
+          invoke(null,"ROOT")
+      )
     ) ++
       seq(com.github.retronym.SbtOneJar.oneJarSettings: _*) ++
       seq(jacoco.settings : _*) ++

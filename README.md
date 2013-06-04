@@ -1,13 +1,36 @@
 # The synchronization daemon for Docear
 
-## Running in dev mode
-* Unix: `sbt "run /tmp/folderToWatch"`
-* Windows: `sbt "run D:\folderToWatch"`
+## Development
 
-## Run tests
+### Run tests
 * `sbt jacoco:cover`
 * the test coverage report is in `target/scala-2.10/jacoco/html/index.html`
 
-## IDE files generation
+### IDE files generation
 * Eclipse: `sbt eclipse`
 * IntelliJ IDEA: `sbt gen-idea`
+
+### Run
+* `sbt run`
+* kill with Strg + c or `kill -15 <PID>`
+
+### Configuration for different environments and use cases
+* started with `sbt run` the default configuration is application.conf
+* started with `sbt -Dconfig.file=developername.conf run` the used configuration is developername.conf
+* started with `java -jar <artefact-name>` the used configuration is prod.conf
+
+### Dependency Injection
+* using application.conf or similar files
+```
+daemon.di {
+    full.path.Interface=full.path.Implementation
+}
+```
+
+### Plugins
+* a plugin must extend org.docear.syncdaemon.Plugin
+* wire it in application.conf, look at the comment above the key `daemon.plugins`
+
+### Packaging
+* `sbt one-jar`
+* the artefact is target/sync-daemon-<version>-one-jar.jar
