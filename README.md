@@ -11,3 +11,11 @@
 ## IDE files generation
 * Eclipse: `sbt eclipse`
 * IntelliJ IDEA: `sbt gen-idea`
+
+## Dependency Injection
+* using application.conf or similar files
+```
+daemon.di {
+    full.path.Interface=full.path.Implementation
+}
+```
