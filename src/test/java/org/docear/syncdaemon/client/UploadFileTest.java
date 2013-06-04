@@ -13,7 +13,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class UploadFileTest {
-	private static final User user = new User("Julius", "Julius-token");
+//	private static final User user = new User("Julius", "Julius-token");
+	private static final User user = new User("online-demo", "A91AF9EE20D8611666753B8A49296B5A");
+
 
 	@Test
 	@Ignore
@@ -22,7 +24,7 @@ public class UploadFileTest {
 		final ClientService clientService = deamon.service(ClientService.class);
 
 		// get root for project
-		String pathOfClass = UploadFileTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+		String pathOfClass = DownloadFileTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 
 		final String rootPath = pathOfClass + File.separator + "Testprojects" + File.separator + "Project_0";
 

@@ -26,6 +26,7 @@ object Build extends Build {
     ,"com.fasterxml.jackson.core" % "jackson-core" % "2.1.4"
 	,"com.fasterxml.jackson.core" % "jackson-annotations" % "2.1.4"
     ,"com.fasterxml.jackson.core" % "jackson-databind" % "2.1.4"
+            
   )
 
   lazy val projectReleaseSettings = {

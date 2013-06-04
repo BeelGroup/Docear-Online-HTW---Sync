@@ -11,6 +11,7 @@ import org.junit.Test;
 public class GetFolderMetaDataTest {
 	private static final User user = new User("Julius", "Julius-token");
 	
+	
 	@Test
 	@Ignore
 	public void testGetFolderMetaData() {

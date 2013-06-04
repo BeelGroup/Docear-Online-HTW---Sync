@@ -7,9 +7,17 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipInputStream;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.io.IOUtils;
@@ -27,6 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import com.typesafe.config.Config;
@@ -38,12 +47,24 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 	private Client restClient;
 
 	private void intialize() {
+		
+		//trust certificates
+		try {
+			SSLContext ctx = SSLContext.getInstance("TLS");
+			ctx.init(new KeyManager[0], new TrustManager[] { new DefaultTrustManager() }, new SecureRandom());
+			SSLContext.setDefault(ctx);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		
 		/**
 		 * important! WS does not run properly without the logging filter. Why?
 		 * No Idea...
 		 */
 		final PrintStream stream = new PrintStream(new NullOutputStream());
 		restClient = ApacheHttpClient.create();
+		restClient.addFilter(new HTTPBasicAuthFilter("docear", "freeplane537"));
+
 		restClient.addFilter(new LoggingFilter(stream));
 
 		// generate service url
@@ -90,8 +111,24 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 	}
 
 	@Override
-	public void download(User user, FileMetaData currentServerMetaData) {
-		throw new RuntimeException("Not implemented.");
+	public InputStream download(User user, FileMetaData currentServerMetaData) {
+		final String urlEncodedPath = normalizePath(currentServerMetaData.getPath());
+		// create request
+		final WebResource request = preparedResource(currentServerMetaData.getProjectId(), user).path("file").path(urlEncodedPath);
+
+		ClientResponse response = request.get(ClientResponse.class);
+
+		// on success
+		if (response.getStatus() == 200) {
+			final ZipInputStream inStream = new ZipInputStream(response.getEntityInputStream());
+			try {
+				inStream.getNextEntry();
+			} catch (IOException e) {
+				throw new RuntimeException("Problem with zipfile download! unknown error occured...  ", e);
+			}
+			return inStream;
+		} else
+			return null;
 	}
 
 	@Override
@@ -108,21 +145,37 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 			return null;
 	}
 
+	private static class DefaultTrustManager implements X509TrustManager {
+
+		@Override
+		public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+		}
+
+		@Override
+		public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+		}
+
+		@Override
+		public X509Certificate[] getAcceptedIssuers() {
+			return null;
+		}
+	}
+
 	@Override
 	public FolderMetaData getFolderMetaData(User user, FileMetaData folderMetaData) {
 		final String projectId = folderMetaData.getProjectId();
 
 		final String urlEncodedFilePath = normalizePath(folderMetaData.getPath());
-		// create request
-		final WebResource request = preparedResource(projectId, user).path("metadata").path(urlEncodedFilePath);
 
+		final WebResource request = preparedResource(projectId, user).path("metadata").path(urlEncodedFilePath);
 		ClientResponse response = request.get(ClientResponse.class);
 
 		// on success
 		if (response.getStatus() == 200)
 			return serverMetadataToLocalFolderMetaData(projectId, response.getEntity(String.class));
-		else
+		else {
 			return null;
+		}
 	}
 
 	@Override
