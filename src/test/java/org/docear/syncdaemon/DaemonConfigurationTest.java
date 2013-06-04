@@ -2,6 +2,8 @@ package org.docear.syncdaemon;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.docear.syncdaemon.client.ClientService;
+import org.docear.syncdaemon.client.ClientServiceImpl;
 import org.docear.syncdaemon.logging.LoggingPlugin;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -33,6 +35,18 @@ public class DaemonConfigurationTest {
     public void testFindPluginSettingsInConfigFile() throws Exception {
         final LoggingPlugin plugin = new Daemon().plugin(LoggingPlugin.class);
         assertThat(plugin).overridingErrorMessage("logging plugin not found").isNotNull();
+    }
+
+    @Test
+    public void testDependencyInjection() throws Exception {
+        final ClientService service = new Daemon().service(ClientService.class);
+        assertThat(service).isNotNull();
+        assertThat(service).isInstanceOf(ClientServiceImpl.class);
+    }
+
+    @Test(expected = com.typesafe.config.ConfigException.class)
+    public void testDependencyInjectionWithNoConfigKey() throws Exception {
+        new Daemon().service(DaemonConfigurationTest.class);
     }
 
     private void assertBaseUrl(Daemon daemon, String baseUrl) {

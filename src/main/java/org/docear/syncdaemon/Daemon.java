@@ -9,11 +9,14 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+
 public class Daemon {
     private static final Logger logger = LoggerFactory.getLogger(Daemon.class);
 
     private Config config;
     private List<Plugin> plugins = new LinkedList<Plugin>();
+    private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = new HashMap<Class, Object>();
 
     public Daemon() {
         this(ConfigFactory.load());
@@ -71,10 +74,28 @@ public class Daemon {
     }
 
 	public <T> T service(Class<T> clazz) {
-		throw new RuntimeException("Not implemented");
-	}
-	
-	public void onStart() {
+        T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
+        if (result == null) {
+            final String implClassName = config.getString("daemon.di." + clazz.getName());
+            if (isNotEmpty(implClassName)) {
+                result = createInstanceWithDefaultConstructor(implClassName);
+            } else {
+                throw new IllegalStateException("can't find implementation for " + clazz);
+            }
+        }
+        return result;
+    }
+
+    private <T> T createInstanceWithDefaultConstructor(String implClassName){
+        try {
+            final Class<?> implClass = Class.forName(implClassName);
+            return (T) implClass.newInstance();
+        } catch (Exception e) {
+            throw new IllegalStateException("can't instantiate " + implClassName, e);
+        }
+    }
+
+    public void onStart() {
         for (final Plugin plugin : plugins) {
             if (plugin.enabled()) {
                 plugin.onStart();
