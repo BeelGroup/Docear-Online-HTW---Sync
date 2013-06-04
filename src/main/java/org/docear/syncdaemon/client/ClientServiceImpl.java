@@ -2,20 +2,26 @@ package org.docear.syncdaemon.client;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.docear.syncdaemon.NeedsConfig;
+import org.docear.syncdaemon.client.exceptions.NoFolderException;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.client.Client;
@@ -311,13 +317,12 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 			InputStream fileInStream = new FileInputStream(absoluteFilePath);
 
 			// create request
-			final WebResource request = preparedResource().path("project").path(fileMetaData.getProjectId()).path("file").path(urlEncodedFilePath)
-					.queryParam("parentRev", "" + fileMetaData.getRevision()).queryParam("isZip", "false");
+			final WebResource request = preparedResource(fileMetaData.getProjectId()).path("file").path(urlEncodedFilePath).queryParam("parentRev", "" + fileMetaData.getRevision())
+					.queryParam("isZip", "false");
 
 			ClientResponse response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
-			
-			
-			final FileMetaData newFileMeta = serverMetadataToLocalMetadata(projectId, response.getEntity(String.class));
+
+			final FileMetaData newFileMeta = serverMetadataToLocalFileMetaData(projectId, response.getEntity(String.class));
 			// check that file is no conflicted copy
 			if (newFileMeta.getPath().equals(fileMetaData.getPath())) {
 				// equal path => no conflict
@@ -346,7 +351,19 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
 	@Override
 	public FolderMetaData getFolderMetaData(FileMetaData folderMetaData) {
-		throw new RuntimeException("Not implemented.");
+		final String projectId = folderMetaData.getProjectId();
+
+		final String urlEncodedFilePath = normalizePath(folderMetaData.getPath());
+		// create request
+		final WebResource request = preparedResource(projectId).path("metadata").path(urlEncodedFilePath);
+
+		ClientResponse response = request.get(ClientResponse.class);
+
+		// on success
+		if (response.getStatus() == 200)
+			return serverMetadataToLocalFolderMetaData(projectId, response.getEntity(String.class));
+		else
+			return null;
 	}
 
 	@Override
@@ -355,13 +372,13 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
 		final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
 		// create request
-		final WebResource request = preparedResource().path("project").path(fileMetaData.getProjectId()).path("metadata").path(urlEncodedFilePath);
+		final WebResource request = preparedResource(fileMetaData.getProjectId()).path("metadata").path(urlEncodedFilePath);
 
 		ClientResponse response = request.get(ClientResponse.class);
-		
-		//on success
-		if(response.getStatus() == 200)
-			return serverMetadataToLocalMetadata(projectId, response.getEntity(String.class));
+
+		// on success
+		if (response.getStatus() == 200)
+			return serverMetadataToLocalFileMetaData(projectId, response.getEntity(String.class));
 		else
 			return null;
 
@@ -376,8 +393,10 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
 	// private methods
 
-	private WebResource preparedResource() {
-		return restClient.resource(serviceUrl).queryParam("username", username()).queryParam("accessToken", accessToken());
+	private WebResource preparedResource(String projectId) {
+		return restClient.resource(serviceUrl).path("project").path(projectId) // path
+				// authentication
+				.queryParam("username", username()).queryParam("accessToken", accessToken());
 	}
 
 	private String username() {
@@ -399,8 +418,31 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 		}
 	}
 
-	private FileMetaData serverMetadataToLocalMetadata(String projectId, String metadata) {
+	private FolderMetaData serverMetadataToLocalFolderMetaData(String projectId, String metadata) {
 		try {
+			final JsonNode metaJson = new ObjectMapper().readTree(metadata);
+			final boolean dir = metaJson.get("dir").booleanValue();
+			if (!dir) {
+				throw new NoFolderException("resource is no folder");
+			}
+			final FileMetaData fileMetaData = serverMetadataToLocalFileMetaData(projectId, metadata);
+			final List<FileMetaData> childrenData = new ArrayList<FileMetaData>();
+			for (JsonNode metaNode : metaJson.get("contents")) {
+				childrenData.add(serverMetadataToLocalFileMetaData(projectId, metaNode.toString()));
+			}
+			return new FolderMetaData(fileMetaData, childrenData);
+		} catch (JsonMappingException e) {
+			throw new RuntimeException("Invalid server metadata object.", e);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Invalid server metadata object.", e);
+		} catch (IOException e) {
+			throw new RuntimeException("Invalid server metadata object.", e);
+		}
+	}
+
+	private FileMetaData serverMetadataToLocalFileMetaData(String projectId, String metadata) {
+		try {
+			
 			final JsonNode metaJson = new ObjectMapper().readTree(metadata);
 			final String path = metaJson.get("path").textValue();
 			final Long revision = metaJson.get("revision").longValue();
