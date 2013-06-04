@@ -10,6 +10,10 @@
 * Eclipse: `sbt eclipse`
 * IntelliJ IDEA: `sbt gen-idea`
 
+### Run
+* `sbt run`
+* kill with Strg + c or `kill -15 <PID>`
+
 ### Configuration for different environments and use cases
 * started with `sbt run` the default configuration is application.conf
 * started with `sbt -Dconfig.file=developername.conf run` the used configuration is developername.conf

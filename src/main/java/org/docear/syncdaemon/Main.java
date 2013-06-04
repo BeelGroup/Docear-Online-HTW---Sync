@@ -11,13 +11,29 @@ import org.slf4j.LoggerFactory;
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
 
 public class Main {
+    final static Logger logger = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) throws IOException, InterruptedException {
-        final Logger logger = LoggerFactory.getLogger(Main.class);
         SysOutOverSLF4J.sendSystemOutAndErrToSLF4J();
-        final Config config = loadConfig();
-        final Daemon daemon = new Daemon(config);
-        daemon.onStart();
-        daemon.onStop();
+        final Daemon daemon = new Daemon(loadConfig());
+        setupShutdownHandling(daemon);
+        startDaemon(daemon);
+        awaitTermination();
+    }
+
+    private static void awaitTermination() throws InterruptedException {
+        Thread.currentThread().join();
+    }
+
+    private static void startDaemon(Daemon daemon) {
+        new DaemonThread(daemon).start();
+    }
+
+    private static void setupShutdownHandling(final Daemon daemon) {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                daemon.onStop();
+            }
+        });
     }
 
     private static Config loadConfig() {
