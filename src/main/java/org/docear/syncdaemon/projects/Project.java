@@ -6,6 +6,7 @@ public class Project {
     final long revision;
 
     public Project(String id, String rootPath, long revision) {
+    	// TODO assume rootpath ends with "/"
         this.id = id;
         this.rootPath = rootPath;
         this.revision = revision;
