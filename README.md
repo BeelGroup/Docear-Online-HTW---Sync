@@ -19,3 +19,7 @@ daemon.di {
     full.path.Interface=full.path.Implementation
 }
 ```
+
+## Plugins
+* a plugin must extend org.docear.syncdaemon.Plugin
+* wire it in application.conf, look at the comment above the key `daemon.plugins`
