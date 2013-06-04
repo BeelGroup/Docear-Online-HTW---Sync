@@ -1,9 +1,13 @@
 package org.docear.syncdaemon.client;
 
+import com.typesafe.config.Config;
+import org.docear.syncdaemon.NeedsConfig;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.users.User;
 
-public class ClientServiceImpl implements ClientService {
+public class ClientServiceImpl implements ClientService, NeedsConfig {
+    private Config config;
+
     @Override
     public UploadResponse upload(FileMetaData fileMetaData) {
     	throw new RuntimeException("Not implemented.");
@@ -35,4 +39,9 @@ public class ClientServiceImpl implements ClientService {
 	public FolderMetaData getFolderMetaData(FileMetaData folderMetaData) {
 		throw new RuntimeException("Not implemented.");
 	}
+
+    @Override
+    public void setConfig(Config config) {
+        this.config = config;
+    }
 }
