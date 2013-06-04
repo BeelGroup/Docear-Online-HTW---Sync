@@ -87,6 +87,10 @@ public class Daemon {
             final String implClassName = config.getString("daemon.di." + clazz.getName());
             if (isNotEmpty(implClassName)) {
                 result = createInstanceWithDefaultConstructor(implClassName);
+                if (result instanceof NeedsConfig) {
+                    final NeedsConfig needsConfig = (NeedsConfig) result;
+                    needsConfig.setConfig(config);
+                }
             } else {
                 throw new IllegalStateException("can't find implementation for " + clazz);
             }

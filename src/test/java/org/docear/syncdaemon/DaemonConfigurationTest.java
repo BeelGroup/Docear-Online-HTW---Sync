@@ -1,7 +1,5 @@
 package org.docear.syncdaemon;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.ClientServiceImpl;
 import org.docear.syncdaemon.logging.LoggingPlugin;
@@ -9,6 +7,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.docear.syncdaemon.TestUtils.daemonWithService;
+import static org.docear.syncdaemon.TestUtils.testDaemonWithAdditionalConfiguration;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class DaemonConfigurationTest {
@@ -25,8 +25,7 @@ public class DaemonConfigurationTest {
     @Test
     public void testGetConfigurationWithInjected() throws Exception {
         final String baseUrl = "https://my.docear.org";
-        final Config overWritingConfig = ConfigFactory.parseString("daemon.client.baseurl=\"" + baseUrl + "\"");
-        final Daemon daemon = Daemon.createWithAdditionalConfig(overWritingConfig);
+        final Daemon daemon = testDaemonWithAdditionalConfiguration("daemon.client.baseurl=\"" + baseUrl + "\"");
         assertDaemonNameIsCorrect(daemon);
         assertBaseUrl(daemon, baseUrl);
     }
@@ -44,6 +43,17 @@ public class DaemonConfigurationTest {
         assertThat(service).isInstanceOf(ClientServiceImpl.class);
     }
 
+    @Test
+    public void testDependencyInjectionWithConfiguration() throws Exception {
+        final Daemon daemon = daemonWithService(AServiceInterface.class, ServiceNeedingConfig.class);
+        final AServiceInterface service = daemon.service(AServiceInterface.class);
+        assertThat(service).isNotNull();
+        assertThat(service).isInstanceOf(ServiceNeedingConfig.class);
+        final ServiceNeedingConfig serviceNeedingConfig = (ServiceNeedingConfig) service;
+        assertThat(serviceNeedingConfig.getConfig()).isNotNull();
+        assertThat(serviceNeedingConfig.getConfig().getString("daemon.name")).isNotEmpty();
+    }
+
     @Test(expected = com.typesafe.config.ConfigException.class)
     public void testDependencyInjectionWithNoConfigKey() throws Exception {
         new Daemon().service(DaemonConfigurationTest.class);
@@ -58,4 +68,5 @@ public class DaemonConfigurationTest {
         assertThat(daemonName).isNotNull();
         assertThat(daemonName).contains("Docear");
     }
+
 }
