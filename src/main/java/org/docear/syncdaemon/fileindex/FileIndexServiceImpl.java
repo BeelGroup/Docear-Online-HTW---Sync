@@ -25,6 +25,7 @@ public class FileIndexServiceImpl implements FileIndexService {
 		if (localRev != project.getRevision()){
 			List<FileMetaData> files = FileReceiver.receiveFiles(project);
 			
+			// TODO user credentials required to use clientService
 			for (FileMetaData fmdFromScan : files){			
 		        final FileMetaData fmdFromIndexDb = indexDbService.getFileMetaData(fmdFromScan);
 		        if (fmdFromScan.isChanged(fmdFromIndexDb)) {

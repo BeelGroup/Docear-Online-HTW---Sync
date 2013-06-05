@@ -19,7 +19,7 @@ public class DaemonConfigurationTest {
     public void testGetConfigurationFromClasspath() throws Exception {
         final Daemon daemon = new Daemon();
         assertDaemonNameIsCorrect(daemon);
-        assertBaseUrl(daemon, "http://localhost:9000");
+        assertBaseUrl(daemon, "http://localhost:9000/api");
     }
 
     @Test
