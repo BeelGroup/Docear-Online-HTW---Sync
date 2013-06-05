@@ -1,9 +1,9 @@
 package org.docear.syncdaemon.fileindex;
 
+import org.apache.commons.io.FilenameUtils;
+
 public final class FileMetaData {
-    /**
-     * the absolute path from project
-     */
+	// path always starts with "/"
     final String path;
     final String hash;
     final String projectId;
@@ -15,7 +15,7 @@ public final class FileMetaData {
     final long revision;
 
     public FileMetaData(String path, String hash, String projectId, boolean isFolder, boolean isDeleted, long revision) {
-        this.path = path;
+        this.path = FilenameUtils.normalizeNoEndSeparator(FilenameUtils.separatorsToSystem(path));
         this.hash = hash;
         this.projectId = projectId;
         this.isFolder = isFolder;
@@ -29,7 +29,7 @@ public final class FileMetaData {
      * @param path
      */
     public FileMetaData(String projectId, String path, boolean isDeleted) {
-        this.path = path;
+    	this.path = FilenameUtils.normalizeNoEndSeparator(FilenameUtils.separatorsToSystem(path));
         this.hash = null;
         this.projectId = projectId;
         this.isFolder = true;
@@ -61,5 +61,26 @@ public final class FileMetaData {
             throw new IllegalArgumentException("compared files for different paths");
         }
         return hash != other.hash;
+    }
+    
+    @Override
+    public String toString(){
+		return "path: " + path 
+				+ " hash: " + hash
+				+ " projectId: " + projectId 
+				+ " isFolder: " + isFolder
+				+ " isDeleted: " + isDeleted
+				+ " revision: " + revision;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+    	FileMetaData other = (FileMetaData) obj;
+    	return this.isDeleted == other.isDeleted 
+    		&& this.isFolder == other.isFolder
+    		&& ((this.hash == null && other.hash== null) || (this.hash.equals(other.hash)))
+    		&& this.path.equals(other.path)
+    		&& this.projectId.equals(other.projectId)
+    		&& this.revision == other.revision;
     }
 }

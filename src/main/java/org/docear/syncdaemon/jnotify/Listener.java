@@ -48,7 +48,7 @@ public class Listener implements JNotifyListener {
     }
 
     private void sendMessage(final String rootPath, final String name) {
-        final String projectRelativePath = Project.toProjectRelativePath(rootPath, name);
+        final String projectRelativePath = Project.toRelativePath(rootPath, name);
         final FileChangeEvent message = new FileChangeEvent(projectRelativePath, project.getId());
         recipient.tell(message, recipient);
     }

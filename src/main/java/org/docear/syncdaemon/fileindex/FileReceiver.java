@@ -26,20 +26,20 @@ public class FileReceiver {
 		File root = new File(project.getRootPath());
 		Collection<File> fileCollection = FileUtils.listFilesAndDirs(root, TrueFileFilter.INSTANCE, DirectoryFileFilter.DIRECTORY);
 		for (File f : fileCollection){
-			logger.debug("Processing file \"" + f.getName() + "\"");
+			logger.debug("Processing file \"" + f.getName() + "\" -> \"" + project.toRelativePath(f.getAbsolutePath()) + "\"");
 			if (f.equals(root)){
 				continue;
 			}
 			String hash = null;
-			/*try {
+			try {
 				if (f.isFile()) {
 					hash = hashAlgo.generate(f);
 				}
 			} catch (IOException e){
 				logger.error(e.toString());
 				continue;
-			}*/
-			FileMetaData fmd = new FileMetaData(f.getAbsolutePath(), hash, project.getId(), f.isDirectory(), false, -1);
+			}
+			FileMetaData fmd = new FileMetaData(project.toRelativePath(f.getAbsolutePath()), hash, project.getId(), f.isDirectory(), false, -1);
 			files.add(fmd);
 		}
 		return files;
