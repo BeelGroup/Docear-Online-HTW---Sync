@@ -3,6 +3,7 @@ package org.docear.syncdaemon.actors;
 import org.apache.commons.io.FilenameUtils;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.messages.FileChangeEvent;
+import org.docear.syncdaemon.messages.FileConflictEvent;
 import org.docear.syncdaemon.projects.Project;
 
 import akka.actor.ActorRef;
@@ -17,13 +18,18 @@ public abstract class Service {
 		this.project = project;
 	}
 	
-	protected void sendMessage(final String path, final String name) {
+	protected void sendConflictMesage(final FileMetaData fmd) {
+		final FileConflictEvent message = new FileConflictEvent(fmd.getPath(), project.getId());
+        recipient.tell(message, recipient);
+	}
+	
+	protected void sendFileChangedMessage(final String path, final String name) {
 		String absolutePath = FilenameUtils.concat(path, name);
 		final FileChangeEvent message = new FileChangeEvent(project.toRelativePath(absolutePath), project.getId());
         recipient.tell(message, recipient);
 	}
 	
-	protected void sendMessage(final FileMetaData fmd) {
+	protected void sendFileChangedMessage(final FileMetaData fmd) {
         final FileChangeEvent message = new FileChangeEvent(fmd.getPath(), project.getId());
         recipient.tell(message, recipient);
     }

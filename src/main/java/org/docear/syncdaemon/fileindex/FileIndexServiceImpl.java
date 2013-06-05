@@ -33,9 +33,9 @@ public class FileIndexServiceImpl extends Service implements FileIndexService {
 			for (FileMetaData fmdFromScan : files){			
 		        final FileMetaData fmdFromIndexDb = indexDbService.getFileMetaData(fmdFromScan);
 		        if (fmdFromScan.isChanged(fmdFromIndexDb)) {
-		        	
+		        	sendConflictMesage(fmdFromScan);
 		        } else {
-		            //akka message if it would be jNotify and life change
+		        	sendFileChangedMessage(fmdFromScan);
 		        }
 			}
 		}
