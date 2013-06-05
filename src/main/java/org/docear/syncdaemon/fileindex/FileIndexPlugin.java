@@ -19,7 +19,7 @@ public class FileIndexPlugin extends Plugin{
         final List<Project> projects = projectService.getProjects();
         final FileIndexServiceFactory factory = daemon().service(FileIndexServiceFactory.class);
         for (final Project project : projects) {
-            factory.create().scanProject(project);
+            factory.create(project).scanProject();
         }
     }
 

@@ -2,24 +2,28 @@ package org.docear.syncdaemon.fileindex;
 
 import java.util.List;
 
+import org.docear.syncdaemon.actors.Service;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.ClientServiceImpl;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.IndexDbServiceImpl;
 import org.docear.syncdaemon.projects.Project;
 
-public class FileIndexServiceImpl implements FileIndexService {
+import akka.actor.ActorRef;
+
+public class FileIndexServiceImpl extends Service implements FileIndexService {
 
 	private final ClientService clientService;
 	private final IndexDbService indexDbService;
 	
-	public FileIndexServiceImpl(){
+	public FileIndexServiceImpl(ActorRef recipient, Project project){
+		super(recipient, project);
 		clientService = new ClientServiceImpl();
 		indexDbService = new IndexDbServiceImpl();
 	}
 	
 	@Override
-	public void scanProject(Project project) {
+	public void scanProject() {
 		long localRev = indexDbService.getProjectRevision(project.getId());
 		
 		if (localRev != project.getRevision()){
