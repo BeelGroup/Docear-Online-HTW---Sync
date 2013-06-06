@@ -2,7 +2,7 @@ package org.docear.syncdaemon.jnotify;
 
 import net.contentobjects.jnotify.JNotifyListener;
 
-import org.docear.syncdaemon.actors.Service;
+import org.apache.commons.io.FilenameUtils;
 import org.docear.syncdaemon.messages.FileChangeEvent;
 import org.docear.syncdaemon.projects.Project;
 import org.slf4j.Logger;
@@ -10,11 +10,15 @@ import org.slf4j.LoggerFactory;
 
 import akka.actor.ActorRef;
 
-public class Listener extends Service implements JNotifyListener {
+public class Listener implements JNotifyListener {
     private static final Logger logger = LoggerFactory.getLogger(Listener.class);
 
+	private final ActorRef recipient;
+	private final Project project;
+    
     public Listener(Project project, ActorRef recipient) {
-        super(recipient, project);
+		this.recipient = recipient;
+		this.project = project;
     }
 
     @Override
@@ -41,4 +45,10 @@ public class Listener extends Service implements JNotifyListener {
         sendFileChangedMessage(rootPath, oldName);
         sendFileChangedMessage(rootPath, newName);
     }
+    
+	private void sendFileChangedMessage(final String path, final String name) {
+		String absolutePath = FilenameUtils.concat(path, name);
+		final FileChangeEvent message = new FileChangeEvent(project.toRelativePath(absolutePath), project.getId());
+        recipient.tell(message, recipient);
+	}
 }
