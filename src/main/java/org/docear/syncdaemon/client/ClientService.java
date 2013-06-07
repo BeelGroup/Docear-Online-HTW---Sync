@@ -6,6 +6,7 @@ import org.docear.syncdaemon.users.User;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Map;
 
 public interface ClientService {
     /**
@@ -24,6 +25,8 @@ public interface ClientService {
     InputStream download(User user, FileMetaData currentServerMetaData);
     ProjectResponse getProjects(User user);
     FolderMetaData getFolderMetaData(User user, FileMetaData folderMetaData);
+
+    ListenForUpdatesResponse listenForUpdates(User user, Map<String,Long> projectIdRevisionMap);
     
     /**
      * @return {@link FileMetaData} or <code>null</code> if not present

@@ -32,6 +32,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipInputStream;
 
 public class ClientServiceImpl implements ClientService, NeedsConfig {
@@ -142,7 +143,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     @Override
     public ProjectResponse getProjects(User user) {
         // create request
-        final WebResource request = preparedResource(user).path("projects");
+        final WebResource request = preparedResource(user).path("user").path("projects");
 
         ClientResponse response = request.get(ClientResponse.class);
 
@@ -166,6 +167,28 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
         if (response.getStatus() == 200)
             return serverMetadataToLocalFolderMetaData(projectId, response.getEntity(String.class));
         else {
+            return null;
+        }
+    }
+
+    @Override
+    public ListenForUpdatesResponse listenForUpdates(User user, Map<String, Long> projectIdRevisionMap) {
+        final WebResource resource = preparedResource(user).path("project").path("listen");
+        MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
+        for(Map.Entry<String,Long> entry : projectIdRevisionMap.entrySet()) {
+            formData.add(entry.getKey(),entry.getValue().toString());
+        }
+
+        final ClientResponse clientResponse = resource.post(ClientResponse.class, formData);
+
+        if(clientResponse.getStatus() == 200) {
+            try {
+                final ListenForUpdatesResponse response = new ObjectMapper().readValue(clientResponse.getEntityInputStream(),ListenForUpdatesResponse.class);
+                return response;
+            } catch (IOException e) {
+                throw new RuntimeException("problem parsing listenForUpdatesResult");
+            }
+        } else {
             return null;
         }
     }
@@ -196,7 +219,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     }
 
     private WebResource preparedResource(User user) {
-        return restClient.resource(serviceUrl).path("user") // path
+        return restClient.resource(serviceUrl) // path
                 // authentication
                 .queryParam("username", user.getUsername()).queryParam("accessToken", user.getAccessToken());
     }
