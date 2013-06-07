@@ -23,7 +23,6 @@ public class UploadFileTest {
 
     @Before
     public void setUp() {
-
         daemon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
         clientService = daemon.service(ClientService.class);
 

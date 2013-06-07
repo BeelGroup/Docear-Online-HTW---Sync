@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
@@ -57,7 +56,6 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
          */
         final PrintStream stream = new PrintStream(new NullOutputStream());
         restClient = ApacheHttpClient.create();
-        restClient.addFilter(new HTTPBasicAuthFilter("docear", "freeplane537"));
 
         restClient.addFilter(new LoggingFilter(stream));
 
@@ -216,7 +214,6 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
      */
     private String normalizePath(String path) {return this.normalizePath(path,true);}
     private String normalizePath(String path, boolean urlEncode) {
-        System.out.println(path);
         try {
             String newPath = path.replace("\\", "/");
 
@@ -227,7 +224,6 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             if(urlEncode)
                 newPath = URLEncoder.encode(newPath, "UTF-8");
 
-            System.out.println(newPath);
             return newPath;
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("Problem with UTF-8 Encoding");
