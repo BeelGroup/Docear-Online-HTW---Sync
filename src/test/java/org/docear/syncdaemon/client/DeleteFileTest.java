@@ -1,6 +1,5 @@
 package org.docear.syncdaemon.client;
 
-import org.apache.commons.io.IOUtils;
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.TestUtils;
 import org.docear.syncdaemon.fileindex.FileMetaData;
@@ -13,11 +12,17 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 
-public class DownloadFileTest {
-	private static final User user = new User("Julius", "Julius-token");
+/**
+ * Created with IntelliJ IDEA.
+ * User: Julius
+ * Date: 07.06.13
+ * Time: 10:43
+ * To change this template use File | Settings | File Templates.
+ */
+public class DeleteFileTest {
+    private static final User user = new User("Julius", "Julius-token");
+    private Project project;
     private Daemon daemon;
     private ClientService clientService;
     private FileMetaData fileMetaData;
@@ -34,7 +39,7 @@ public class DownloadFileTest {
         final String rootPath = pathOfClass + File.separator + "Testprojects" + File.separator + "Project_0";
 
         final String projectId = "507f191e810c19729de860ea";
-        final Project project = new Project(projectId, rootPath, 8);
+        project = new Project(projectId, rootPath, 8);
 
         final String filename = "/rootFile.pptx";
         fileMetaData = new FileMetaData(filename, "", projectId, false, false, 0);
@@ -42,13 +47,10 @@ public class DownloadFileTest {
         final UploadResponse initialUploadResponse = clientService.upload(user, project, fileMetaData);
     }
 
-	@Test
+    @Test
     @Ignore
-	public void testGetFile() throws IOException {
-		final InputStream inStream = clientService.download(user, fileMetaData);
-		final String fileContent = IOUtils.toString(inStream);
-		IOUtils.closeQuietly(inStream);
-		Assertions.assertThat(fileContent).contains("ppt/slideLayouts/slideLayout3.xml");
-	}
-
+    public void testDeleteUploadedFile() {
+        final FileMetaData meta = clientService.delete(user,project,fileMetaData);
+        Assertions.assertThat(meta.isDeleted()).isEqualTo(true);
+    }
 }

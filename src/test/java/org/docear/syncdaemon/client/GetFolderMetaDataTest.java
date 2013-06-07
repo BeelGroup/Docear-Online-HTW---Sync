@@ -8,25 +8,27 @@ import org.fest.assertions.Assertions;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
+
 public class GetFolderMetaDataTest {
 	private static final User user = new User("Julius", "Julius-token");
 	
 	
 	@Test
-	@Ignore
+    @Ignore
 	public void testGetFolderMetaData() {
 		final Daemon deamon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
 		final ClientService clientService = deamon.service(ClientService.class);
-		final FolderMetaData folderMeta = clientService.getFolderMetaData(user, new FileMetaData("507f191e810c19729de860ea", "/", false));
+		final FolderMetaData folderMeta = clientService.getFolderMetaData(user, new FileMetaData("507f191e810c19729de860ea", File.separator, false));
 		final FileMetaData rootMeta = folderMeta.getMetaData();
 		Assertions.assertThat(rootMeta.getProjectId()).isEqualTo("507f191e810c19729de860ea");
 		Assertions.assertThat(rootMeta.getHash()).isNull();
-		Assertions.assertThat(rootMeta.getPath()).isEqualTo("/");
+		Assertions.assertThat(rootMeta.getPath()).isEqualTo(File.separator);
 		Assertions.assertThat(rootMeta.getRevision()).isEqualTo(0);
 	}
 	
 	@Test
-	@Ignore
+    @Ignore
 	public void testFolderNotPresent() {
 		final Daemon deamon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
 		final ClientService clientService = deamon.service(ClientService.class);
