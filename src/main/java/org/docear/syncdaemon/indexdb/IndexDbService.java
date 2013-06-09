@@ -6,5 +6,5 @@ public interface IndexDbService {
     public void save(FileMetaData currentServerMetaData);
     public long getProjectRevision(String projectId);
     public FileMetaData getFileMetaData(FileMetaData fileMetaData);
-    public FileMetaData getFileMetaData(String resoucre);
+    public FileMetaData getFileMetaData(String pathToFile, String projectId);
 }

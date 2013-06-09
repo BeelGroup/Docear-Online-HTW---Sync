@@ -53,6 +53,14 @@ public final class FileMetaData {
         return revision;
     }
 
+    public boolean isFolder() {
+        return isFolder;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
     public boolean isChanged(FileMetaData other) {
         if (other.projectId != projectId) {
             throw new IllegalArgumentException("compared files between different projects");
