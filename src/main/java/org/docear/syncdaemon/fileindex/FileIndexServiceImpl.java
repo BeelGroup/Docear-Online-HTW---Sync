@@ -7,12 +7,15 @@ import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.ClientServiceImpl;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.IndexDbServiceImpl;
+import org.docear.syncdaemon.indexdb.PersistenceException;
 import org.docear.syncdaemon.projects.Project;
 
 import akka.actor.ActorRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FileIndexServiceImpl extends Service implements FileIndexService {
-
+    private static final Logger logger = LoggerFactory.getLogger(FileIndexServiceImpl.class);
 	private final ClientService clientService;
 	private final IndexDbService indexDbService;
 	
@@ -24,21 +27,25 @@ public class FileIndexServiceImpl extends Service implements FileIndexService {
 	
 	@Override
 	public void scanProject() {
-		long localRev = indexDbService.getProjectRevision(project.getId());
-		
-		if (localRev != project.getRevision()){
-			List<FileMetaData> files = FileReceiver.receiveFiles(project);
-			
-			// TODO user credentials required to use clientService
-			for (FileMetaData fmdFromScan : files){			
-		        final FileMetaData fmdFromIndexDb = indexDbService.getFileMetaData(fmdFromScan);
-		        if (fmdFromScan.isChanged(fmdFromIndexDb)) {
-		        	sendConflictMesage(fmdFromScan);
-		        } else {
-		        	sendFileChangedMessage(fmdFromScan);
-		        }
-			}
-		}
-	}
+        try {
+            long localRev = indexDbService.getProjectRevision(project.getId());
+
+            if (localRev != project.getRevision()){
+                List<FileMetaData> files = FileReceiver.receiveFiles(project);
+
+                // TODO user credentials required to use clientService
+                for (FileMetaData fmdFromScan : files){
+                    final FileMetaData fmdFromIndexDb = indexDbService.getFileMetaData(fmdFromScan);
+                    if (fmdFromScan.isChanged(fmdFromIndexDb)) {
+                        sendConflictMesage(fmdFromScan);
+                    } else {
+                        sendFileChangedMessage(fmdFromScan);
+                    }
+                }
+            }
+        } catch (PersistenceException e) {
+            logger.error("can't scan project", e);
+        }
+    }
 
 }

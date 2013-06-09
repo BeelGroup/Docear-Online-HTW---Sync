@@ -3,8 +3,22 @@ package org.docear.syncdaemon.indexdb;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 
 public interface IndexDbService {
-    public void save(FileMetaData currentServerMetaData);
-    public long getProjectRevision(String projectId);
-    public FileMetaData getFileMetaData(FileMetaData fileMetaData);
-    public FileMetaData getFileMetaData(String pathToFile, String projectId);
+    /**
+     * Saves (inserts or overrides) the meta data in the database.
+     * @param currentServerMetaData the data to be stored
+     */
+    public void save(FileMetaData currentServerMetaData) throws PersistenceException;
+
+    /**
+     * returns current project revision
+     * @param projectId id of requested project
+     */
+    public long getProjectRevision(String projectId) throws PersistenceException;
+
+    /**
+     * returns current file informations of file in the database, including hash and revision
+     * only hash and revision can be different to input metadata
+     * @param fileMetaData file metadata of requested file
+     */
+    public FileMetaData getFileMetaData(FileMetaData fileMetaData) throws PersistenceException;
 }
