@@ -15,6 +15,8 @@ public interface IndexDbService {
      */
     public long getProjectRevision(String projectId) throws PersistenceException;
 
+    public long setProjectRevision(String projectId, long revision) throws PersistenceException;
+
     /**
      * returns current file informations of file in the database, including hash and revision
      * only hash and revision can be different to input metadata

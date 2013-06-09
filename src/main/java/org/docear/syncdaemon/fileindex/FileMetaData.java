@@ -14,6 +14,10 @@ public final class FileMetaData {
      */
     final long revision;
 
+    public static FileMetaData newFile(String path, String hash, String projectId) {
+        return new FileMetaData(path, hash, projectId, false, false, 0);
+    }
+
     public FileMetaData(String path, String hash, String projectId, boolean isFolder, boolean isDeleted, long revision) {
         this.path = FilenameUtils.normalizeNoEndSeparator(FilenameUtils.separatorsToSystem(path));
         this.hash = hash;
@@ -34,7 +38,7 @@ public final class FileMetaData {
         this.projectId = projectId;
         this.isFolder = true;
         this.isDeleted = isDeleted;
-        this.revision = -1;
+        this.revision = 0;
     }
 
     public String getPath() {

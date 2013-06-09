@@ -2,8 +2,8 @@ package org.docear.syncdaemon.fileindex;
 
 import java.util.List;
 
+import org.docear.syncdaemon.indexdb.H2IndexDbService;
 import org.docear.syncdaemon.indexdb.IndexDbService;
-import org.docear.syncdaemon.indexdb.IndexDbServiceImpl;
 import org.docear.syncdaemon.indexdb.PersistenceException;
 import org.docear.syncdaemon.messages.FileChangeEvent;
 import org.docear.syncdaemon.messages.FileConflictEvent;
@@ -23,7 +23,7 @@ public class FileIndexServiceImpl extends UntypedActor implements
     private final IndexDbService indexDbService;
 
     public FileIndexServiceImpl() {
-        indexDbService = new IndexDbServiceImpl();
+        indexDbService = new H2IndexDbService();
     }
 
     public void onReceive(Object message) throws Exception {

@@ -32,6 +32,7 @@ object Build extends Build {
       , "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion
       , "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion
       , "com.h2database" % "h2" % "1.3.172" //database for indexing
+      , "commons-dbutils" % "commons-dbutils" % "1.5" //database utilities
     )
   }
 
