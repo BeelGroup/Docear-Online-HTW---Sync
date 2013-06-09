@@ -21,7 +21,7 @@ public class H2IndexDbService implements IndexDbService {
             public Object execute(Connection connection) throws SQLException {
                 PreparedStatement statement = null;
                 try {
-                    statement = connection.prepareStatement("MERGE INTO files VALUES (?, ?, ?, ?, ?, ?)");
+                    statement = connection.prepareStatement("MERGE INTO " + Table.FILES.getName() + " VALUES (?, ?, ?, ?, ?, ?)");
                     statement.setString(1, currentServerMetaData.getPath());
                     statement.setString(2, currentServerMetaData.getHash());
                     statement.setString(3, currentServerMetaData.getProjectId());
@@ -47,7 +47,7 @@ public class H2IndexDbService implements IndexDbService {
                 ResultSet resultSet = null;
                 Long result = null;
                 try {
-                    statement = connection.prepareStatement("SELECT revision FROM projects WHERE id = ?");
+                    statement = connection.prepareStatement("SELECT revision FROM " + Table.PROJECTS.getName() + " WHERE id = ?");
                     statement.setString(1, projectId);
                     resultSet = statement.executeQuery();
                     final boolean hasResult = resultSet.next();
@@ -70,7 +70,7 @@ public class H2IndexDbService implements IndexDbService {
             public Object execute(Connection connection) throws SQLException {
                 PreparedStatement statement = null;
                 try {
-                    statement = connection.prepareStatement("MERGE INTO projects (id, revision) KEY(id) VALUES (?, ?)");
+                    statement = connection.prepareStatement("MERGE INTO " + Table.PROJECTS.getName() + " (id, revision) KEY(id) VALUES (?, ?)");
                     statement.setString(1, projectId);
                     statement.setLong(2, revision);
                     statement.execute();
@@ -92,7 +92,7 @@ public class H2IndexDbService implements IndexDbService {
                 ResultSet resultSet = null;
                 FileMetaData result = null;
                 try {
-                    statement = connection.prepareStatement("SELECT * FROM files WHERE path = ? and projectId = ?");
+                    statement = connection.prepareStatement("SELECT * FROM " + Table.FILES.getName() + " WHERE path = ? and projectId = ?");
                     statement.setString(1, fileMetaData.getPath());
                     statement.setString(2, fileMetaData.getProjectId());
                     resultSet = statement.executeQuery();

@@ -29,45 +29,32 @@ public class H2DatabasePlugin extends Plugin {
 
     @Override
     public void onStart() {
+        loadH2Driver();
         Connection conn = null;
         try {
-            Class.forName("org.h2.Driver");
-            final H2IndexDbService service = (H2IndexDbService) daemon().service(IndexDbService.class);
-            keepAliveConnection = service.getConnection();
-            conn = service.getConnection();
-            createTables(conn);
-            logger.debug("started H2 database");
+            keepAliveConnection = getConnection();
+            conn = getConnection();
+            Table.ensureTablesCreated(conn);
             if (shouldStartDebugWebServer()) {
-                Server.startWebServer(conn);
+                Server.startWebServer(getConnection());
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         } finally {
             DbUtils.closeQuietly(conn);
         }
     }
 
-    private void createTables(Connection conn) throws SQLException {
-        createTable(conn, "files", "path VARCHAR(500), " +
-                "hash CHAR(128), " +
-                "projectId VARCHAR(500), " +
-                "isFolder BOOL, " +
-                "isDeleted BOOL, " +
-                "revision BIGINT," +
-                "PRIMARY KEY (path, projectId)");
-        createTable(conn, "projects", "id VARCHAR(500), revision BIGINT, PRIMARY KEY (id)");
+    private Connection getConnection() throws SQLException {
+        final H2IndexDbService service = (H2IndexDbService) daemon().service(IndexDbService.class);
+        return service.getConnection();
     }
 
-    private void createTable(Connection conn, String name, String columns) throws SQLException {
-        Statement createTableStatement = null;
+    private void loadH2Driver() {
         try {
-            createTableStatement = conn.createStatement();
-            createTableStatement.executeUpdate("CREATE TABLE IF NOT EXISTS " + name + "( " + columns + " )");
-            logger.debug("table " + name + " exists");
-        } finally {
-            DbUtils.closeQuietly(createTableStatement);
+            Class.forName("org.h2.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
