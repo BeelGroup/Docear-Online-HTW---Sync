@@ -20,7 +20,7 @@ public class IndexDbServiceImpl implements IndexDbService {
 	}
 
 	@Override
-	public FileMetaData getFileMetaData(String resoucre) {
+	public FileMetaData getFileMetaData(String pathToFile, String projectId) {
 		throw new RuntimeException("Not implemented.");
 	}
 }
