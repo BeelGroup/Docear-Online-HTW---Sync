@@ -2,7 +2,7 @@ package org.docear.syncdaemon.fileindex;
 
 import java.util.List;
 
-import org.docear.syncdaemon.indexdb.H2IndexDbService;
+import org.docear.syncdaemon.indexdb.h2.H2IndexDbService;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.PersistenceException;
 import org.docear.syncdaemon.messages.FileChangeEvent;

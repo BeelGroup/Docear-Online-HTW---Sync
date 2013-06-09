@@ -6,7 +6,7 @@ import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.Plugin;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.ClientServiceImpl;
-import org.docear.syncdaemon.indexdb.H2IndexDbService;
+import org.docear.syncdaemon.indexdb.h2.H2IndexDbService;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.projects.LocalProjectService;
 import org.docear.syncdaemon.projects.Project;

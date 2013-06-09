@@ -1,9 +1,11 @@
-package org.docear.syncdaemon.indexdb;
+package org.docear.syncdaemon.indexdb.h2;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.docear.syncdaemon.fileindex.FileMetaData;
+import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.indexdb.PersistenceException;
 
 import java.sql.*;
 

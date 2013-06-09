@@ -1,14 +1,14 @@
-package org.docear.syncdaemon.indexdb;
+package org.docear.syncdaemon.indexdb.h2;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.Plugin;
+import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.h2.tools.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.sql.Date;
 
 /**
  * Plugin that is activated when the service H2IndexDbService is used.
