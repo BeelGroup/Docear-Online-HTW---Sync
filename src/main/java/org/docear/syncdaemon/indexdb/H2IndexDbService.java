@@ -36,14 +36,49 @@ public class H2IndexDbService implements IndexDbService {
         });
     }
 
-	@Override
-	public long getProjectRevision(String projectId) throws PersistenceException {
-		throw new RuntimeException("Not implemented.");
-	}
+    @Override
+    public long getProjectRevision(final String projectId) throws PersistenceException {
+        return (Long) execute(new WithConnection() {
+            @Override
+            public Object execute(Connection connection) throws SQLException {
+                PreparedStatement statement = null;
+                ResultSet resultSet = null;
+                Long result = null;
+                try {
+                    statement = connection.prepareStatement("SELECT revision FROM projects WHERE id = ?");
+                    statement.setString(1, projectId);
+                    resultSet = statement.executeQuery();
+                    final boolean hasResult = resultSet.next();
+                    if (hasResult) {
+                        result = resultSet.getLong(1);
+                    }
+                    return result;
+                } finally {
+                    DbUtils.closeQuietly(resultSet);
+                    DbUtils.closeQuietly(statement);
+                }
+            }
+        });
+    }
 
     @Override
-    public long setProjectRevision(String projectId, long revision) throws PersistenceException {
-        throw new RuntimeException("Not implemented.");
+    public void setProjectRevision(final String projectId, final long revision) throws PersistenceException {
+        execute(new WithConnection() {
+            @Override
+            public Object execute(Connection connection) throws SQLException {
+                PreparedStatement statement = null;
+                try {
+                    statement = connection.prepareStatement("MERGE INTO projects (id, revision) KEY(id) VALUES (?, ?)");
+                    statement.setString(1, projectId);
+                    statement.setLong(2, revision);
+                    statement.execute();
+                    return null;//not needed
+                } finally {
+                    DbUtils.closeQuietly(statement);
+                }
+
+            }
+        });
     }
 
     @Override
