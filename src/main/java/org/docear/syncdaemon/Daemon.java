@@ -72,14 +72,6 @@ public class Daemon {
         }
         return null;
     }
-    
-    public <T extends Plugin> T addPluginByClass(Class<T> clazz){
-    	T t = plugin(clazz);
-    	if (t != null) {
-    		addPlugin(t);
-    	}
-    	return t;
-    }
 
 	public <T> T service(Class<T> clazz) {
         T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
