@@ -56,11 +56,9 @@ object Build extends Build {
   def unitFilter(name: String): Boolean = !(name endsWith "ITest")
   def itFilter(name: String): Boolean = true
 
-  lazy val main = Project(
-    id = "sync-daemon",
-    base = file("."),
-    settings = Project.defaultSettings ++ Seq(
-      name := "sync-daemon"
+  lazy val main = Project("sync-daemon", file("."))
+    .configs( IntegrationTest )
+    .settings(name := "sync-daemon"
       , organization := "org.docear"
       , version := "0.1-SNAPSHOT"
       , crossPaths := false
@@ -87,12 +85,11 @@ object Build extends Build {
           getMethod("getLogger",cl.loadClass("java.lang.String")).
           invoke(null,"ROOT")
       )
-    ) ++
-      seq(com.github.retronym.SbtOneJar.oneJarSettings: _*) ++
-      seq(jacoco.settings : _*) ++
-      seq(parallelExecution in jacoco.Config := false) ++
-      projectReleaseSettings
-  ).settings(inConfig(IntegrationTest)(Defaults.testSettings) : _*)
+  ).settings(com.github.retronym.SbtOneJar.oneJarSettings: _*)
+    .settings(jacoco.settings : _*)
+    .settings(parallelExecution in jacoco.Config := false)
+    .settings(projectReleaseSettings: _*)
+    .settings(inConfig(IntegrationTest)(Defaults.testSettings) : _*)
     .settings(
     testOptions in Test := Seq(Tests.Filter(unitFilter)),
     testOptions in IntegrationTest := Seq(Tests.Filter(itFilter))
