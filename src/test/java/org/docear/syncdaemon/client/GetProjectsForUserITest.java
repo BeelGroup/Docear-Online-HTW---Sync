@@ -5,16 +5,14 @@ import org.docear.syncdaemon.TestUtils;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.fest.assertions.Assertions;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
 
-public class GetProjectsForUserTest {
+public class GetProjectsForUserITest {
 	private static final User user = new User("Julius", "Julius-token");
 
 	@Test
-    @Ignore
 	public void testGetProjects() {
 		final Daemon deamon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
 		final ClientService clientService = deamon.service(ClientService.class);
@@ -24,7 +22,6 @@ public class GetProjectsForUserTest {
 	}
 
 	@Test
-    @Ignore
 	public void testInvalidUser() {
 		final Daemon deamon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
 		final ClientService clientService = deamon.service(ClientService.class);

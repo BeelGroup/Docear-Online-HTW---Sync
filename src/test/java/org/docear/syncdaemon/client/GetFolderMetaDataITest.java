@@ -5,17 +5,15 @@ import org.docear.syncdaemon.TestUtils;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.users.User;
 import org.fest.assertions.Assertions;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 
-public class GetFolderMetaDataTest {
+public class GetFolderMetaDataITest {
 	private static final User user = new User("Julius", "Julius-token");
 	
 	
 	@Test
-    @Ignore
 	public void testGetFolderMetaData() {
 		final Daemon deamon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
 		final ClientService clientService = deamon.service(ClientService.class);
@@ -28,7 +26,6 @@ public class GetFolderMetaDataTest {
 	}
 	
 	@Test
-    @Ignore
 	public void testFolderNotPresent() {
 		final Daemon deamon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
 		final ClientService clientService = deamon.service(ClientService.class);

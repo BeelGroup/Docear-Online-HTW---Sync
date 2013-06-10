@@ -8,7 +8,6 @@ import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.fest.assertions.Assertions;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -16,7 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class DownloadFileTest {
+public class DownloadFileITest {
 	private static final User user = new User("Julius", "Julius-token");
     private Daemon daemon;
     private ClientService clientService;
@@ -30,7 +29,7 @@ public class DownloadFileTest {
         //upload a file
 
         // get root for project
-        String pathOfClass = DownloadFileTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        String pathOfClass = DownloadFileITest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         final String rootPath = pathOfClass + File.separator + "Testprojects" + File.separator + "Project_0";
 
         final String projectId = "507f191e810c19729de860ea";
@@ -43,7 +42,6 @@ public class DownloadFileTest {
     }
 
 	@Test
-    @Ignore
 	public void testGetFile() throws IOException {
 		final InputStream inStream = clientService.download(user, fileMetaData);
 		final String fileContent = IOUtils.toString(inStream);

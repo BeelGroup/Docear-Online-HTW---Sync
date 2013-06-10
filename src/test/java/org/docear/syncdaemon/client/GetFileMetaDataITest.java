@@ -4,7 +4,6 @@ import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.TestUtils;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.users.User;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -12,11 +11,10 @@ import java.io.File;
 import static org.fest.assertions.Assertions.assertThat;
 
 
-public class GetFileMetaDataTest {
+public class GetFileMetaDataITest {
     private static final User user = new User("Julius", "Julius-token");
 
     @Test
-    @Ignore
     public void testGetFileMetaData() {
         final Daemon daemon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
         final ClientService clientService = daemon.service(ClientService.class);
@@ -28,7 +26,6 @@ public class GetFileMetaDataTest {
     }
 
     @Test
-    @Ignore
     public void testFileNotPresent() {
         final Daemon daemon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
         final ClientService clientService = daemon.service(ClientService.class);

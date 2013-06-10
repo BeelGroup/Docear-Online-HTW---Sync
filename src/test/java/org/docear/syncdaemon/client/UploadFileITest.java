@@ -8,13 +8,12 @@ import org.docear.syncdaemon.users.User;
 import org.fest.assertions.Assertions;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 
-public class UploadFileTest {
+public class UploadFileITest {
 	private static final User user = new User("Julius", "Julius-token");
     private Daemon daemon;
     private ClientService clientService;
@@ -26,7 +25,7 @@ public class UploadFileTest {
         daemon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
         clientService = daemon.service(ClientService.class);
 
-        String pathOfClass = DownloadFileTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        String pathOfClass = UploadFileITest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         final String rootPath = pathOfClass + File.separator + "Testprojects" + File.separator + "Project_0";
         final String projectId = "507f191e810c19729de860ea";
         project = new Project(projectId, rootPath, 8);
@@ -49,7 +48,6 @@ public class UploadFileTest {
     }
 
 	@Test
-    @Ignore
 	public void testUploadTwoRevisionsAndConflict() throws FileNotFoundException {
 		// initial upload
 		final UploadResponse initialUploadResponse = clientService.upload(user, project, fileMetaData);
