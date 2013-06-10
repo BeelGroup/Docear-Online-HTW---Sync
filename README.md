@@ -3,8 +3,10 @@
 ## Development
 
 ### Run tests
-* `sbt jacoco:cover`
-* the test coverage report is in `target/scala-2.10/jacoco/html/index.html`
+* unit tests `sbt test` (excludes all test classes ending with "ITest")
+* all tests including integration tests `sbt it:test`
+* coverage for all tests `sbt jacoco:cover`
+    * the test coverage report is in `target/scala-2.10/jacoco/html/index.html`
 
 ### IDE files generation
 * Eclipse: `sbt eclipse`
