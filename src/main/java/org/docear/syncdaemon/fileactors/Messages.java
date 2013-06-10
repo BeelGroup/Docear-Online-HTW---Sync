@@ -11,7 +11,6 @@ public class Messages {
     private static class FileChanged {
         private final Project project;
 
-
         public FileChanged(Project project) {
             this.project = project;
         }
@@ -19,7 +18,6 @@ public class Messages {
         public Project getProject() {
             return project;
         }
-
     }
 
     public static final class FileChangedLocally extends FileChanged {
@@ -44,11 +42,10 @@ public class Messages {
         }
     }
 
-    public static final class ProjectAdded {
+    public static class ProjectChange{
         private final String projectId;
 
-        public ProjectAdded(String projectId) {
-
+        public ProjectChange(String projectId) {
             this.projectId = projectId;
         }
 
@@ -56,17 +53,35 @@ public class Messages {
             return projectId;
         }
     }
-
-    public static final class ProjectDeleted {
-        private final String projectId;
-
-        public ProjectDeleted(String projectId) {
-
-            this.projectId = projectId;
+    
+    public static final class ProjectAdded extends ProjectChange {
+    	private final Long revision;
+    	public ProjectAdded(String projectId, Long revision) {
+            super(projectId);
+            this.revision = revision;
         }
+    	
+    	public Long getRevision() {
+			return revision;
+		}
+    }
 
-        public String getProjectId() {
-            return projectId;
+    public static final class ProjectUpdated extends ProjectChange {
+    	private final Long revision;
+    	
+    	public ProjectUpdated(String projectId, Long revision) {
+            super(projectId);
+            this.revision = revision;
+        }
+    	
+    	public Long getRevision() {
+			return revision;
+		}
+    }
+    
+    public static final class ProjectDeleted extends ProjectChange {
+    	public ProjectDeleted(String projectId) {
+            super(projectId);
         }
     }
 
