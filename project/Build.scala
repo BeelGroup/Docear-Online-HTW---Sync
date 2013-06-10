@@ -52,6 +52,10 @@ object Build extends Build {
     )
   }
 
+  lazy val IntegrationTest = config("it") extend(Test)
+  def unitFilter(name: String): Boolean = !(name endsWith "ITest")
+  def itFilter(name: String): Boolean = true
+
   lazy val main = Project(
     id = "sync-daemon",
     base = file("."),
@@ -88,5 +92,9 @@ object Build extends Build {
       seq(jacoco.settings : _*) ++
       seq(parallelExecution in jacoco.Config := false) ++
       projectReleaseSettings
+  ).settings(inConfig(IntegrationTest)(Defaults.testSettings) : _*)
+    .settings(
+    testOptions in Test := Seq(Tests.Filter(unitFilter)),
+    testOptions in IntegrationTest := Seq(Tests.Filter(itFilter))
   )
 }
