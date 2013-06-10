@@ -1,6 +1,8 @@
 package org.docear.syncdaemon;
 
 
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
@@ -18,6 +20,10 @@ public class Daemon {
     private List<Plugin> plugins = new LinkedList<Plugin>();
     private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = new HashMap<Class, Object>();
 
+    private ActorSystem actorSystem;
+
+    private ActorRef fileChangeActor;
+
     public Daemon() {
         this(ConfigFactory.load());
     }
@@ -25,6 +31,7 @@ public class Daemon {
     public Daemon(Config config) {
         this.config = config;
         setupPlugins();
+        //TODO instantiate fileChangeActor
     }
 
     private void setupPlugins() {
@@ -72,7 +79,7 @@ public class Daemon {
         }
         return null;
     }
-    
+
     public <T extends Plugin> T addPluginByClass(Class<T> clazz){
     	T t = plugin(clazz);
     	if (t != null) {
@@ -132,6 +139,18 @@ public class Daemon {
 
     public Config getConfig() {
         return config;
+    }
+
+    public ActorRef getFileChangeActor() {
+        return fileChangeActor;
+    }
+
+    public void setFileChangeActor(ActorRef fileChangeActor) {
+        this.fileChangeActor = fileChangeActor;
+    }
+
+    public ActorSystem getActorSystem() {
+        return actorSystem;
     }
 
     /* in package scope for testing */
