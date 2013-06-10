@@ -47,7 +47,7 @@ public class ListenForUpdatesTest{
         final Map<String,Long> projectIdRevisionMap = new HashMap<String, Long>();
         projectIdRevisionMap.put("507f191e810c19729de860ea",0L);
 
-        final ListenForUpdatesResponse listenForUpdatesResponse = clientService.listenForUpdates(user,projectIdRevisionMap);
+        final ListenForUpdatesResponse listenForUpdatesResponse = clientService.listenForUpdates(user,projectIdRevisionMap, null);
         Assertions.assertThat(listenForUpdatesResponse.getNewProjects().size()).isGreaterThan(0);
     }
 }

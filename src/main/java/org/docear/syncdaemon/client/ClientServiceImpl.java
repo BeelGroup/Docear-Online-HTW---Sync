@@ -1,5 +1,7 @@
 package org.docear.syncdaemon.client;
 
+import akka.actor.ActorRef;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -172,7 +174,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     }
 
     @Override
-    public ListenForUpdatesResponse listenForUpdates(User user, Map<String, Long> projectIdRevisionMap) {
+    public ListenForUpdatesResponse listenForUpdates(User user, Map<String, Long> projectIdRevisionMap, ActorRef actorRef) {
         final WebResource resource = preparedResource(user).path("project").path("listen");
         MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
         for(Map.Entry<String,Long> entry : projectIdRevisionMap.entrySet()) {
