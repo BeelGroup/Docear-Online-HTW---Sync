@@ -9,7 +9,7 @@
     * the test coverage report is in `target/scala-2.10/jacoco/html/index.html`
 
 #### Integration tests
-1. Start play on localhost:9000 with userMockService
+1. Start play with `sbt -Dconfig.file=conf/syncdaemon.conf compile run`
 2. run sbt it:test for the sync daemon on the same machine
 
 ### IDE files generation
