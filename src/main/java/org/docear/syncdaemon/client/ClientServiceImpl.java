@@ -1,11 +1,11 @@
 package org.docear.syncdaemon.client;
 
 import akka.actor.ActorRef;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -33,6 +33,7 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
@@ -130,7 +131,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     public FileMetaData delete(User user, Project project, FileMetaData fileMetaData) {
         final WebResource resource = preparedResource(project.getId(), user).path("file").path("delete");
         MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-        formData.add("path", normalizePath(fileMetaData.getPath(),false));
+        formData.add("path", normalizePath(fileMetaData.getPath(), false));
 
         final ClientResponse response = resource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).delete(ClientResponse.class, formData);
 
@@ -177,15 +178,15 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     public ListenForUpdatesResponse listenForUpdates(User user, Map<String, Long> projectIdRevisionMap, ActorRef actorRef) {
         final WebResource resource = preparedResource(user).path("project").path("listen");
         MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-        for(Map.Entry<String,Long> entry : projectIdRevisionMap.entrySet()) {
-            formData.add(entry.getKey(),entry.getValue().toString());
+        for (Map.Entry<String, Long> entry : projectIdRevisionMap.entrySet()) {
+            formData.add(entry.getKey(), entry.getValue().toString());
         }
 
         final ClientResponse clientResponse = resource.post(ClientResponse.class, formData);
 
-        if(clientResponse.getStatus() == 200) {
+        if (clientResponse.getStatus() == 200) {
             try {
-                final ListenForUpdatesResponse response = new ObjectMapper().readValue(clientResponse.getEntityInputStream(),ListenForUpdatesResponse.class);
+                final ListenForUpdatesResponse response = new ObjectMapper().readValue(clientResponse.getEntityInputStream(), ListenForUpdatesResponse.class);
                 return response;
             } catch (IOException e) {
                 throw new RuntimeException("problem parsing listenForUpdatesResult");
@@ -213,6 +214,24 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
     }
 
+    @Override
+    public DeltaResponse delta(User user, Project project) {
+        final String projectId = project.getId();
+
+        final WebResource request = preparedResource(projectId, user).path("delta");
+        final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
+        formData.add("projectRevision", project.getRevision() + "");
+
+        final ClientResponse response = request.post(ClientResponse.class, formData);
+
+        if (response.getStatus() == 200) {
+            return serverDeltaResponseToLocalDeltaResponse(projectId, response.getEntity(String.class));
+        } else {
+            return null;
+        }
+
+    }
+
     // Needs Config implementation
     @Override
     public void setConfig(Config config) {
@@ -237,16 +256,19 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     /**
      * converts "\" to "/", ensures leading "/" is present and encodes to UTF-8
      */
-    private String normalizePath(String path) {return this.normalizePath(path,true);}
+    private String normalizePath(String path) {
+        return this.normalizePath(path, true);
+    }
+
     private String normalizePath(String path, boolean urlEncode) {
         try {
             String newPath = path.replace("\\", "/");
 
-            if(!newPath.startsWith("/")) {
-                newPath = "/"+newPath;
+            if (!newPath.startsWith("/")) {
+                newPath = "/" + newPath;
             }
 
-            if(urlEncode)
+            if (urlEncode)
                 newPath = URLEncoder.encode(newPath, "UTF-8");
 
             return newPath;
@@ -290,6 +312,27 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             return new FileMetaData(path, hash, projectId, dir, deleted, revision);
         } catch (Exception e) {
             throw new RuntimeException("Invalid server metadata object.", e);
+        }
+    }
+
+    private DeltaResponse serverDeltaResponseToLocalDeltaResponse(String projectId, String serverDeltaResponse) {
+        try {
+
+            final JsonNode metaJson = new ObjectMapper().readTree(serverDeltaResponse);
+            final Long revision = metaJson.get("currentRevision").longValue();
+            final List<FileMetaData> changedMeta = new ArrayList<FileMetaData>();
+            ObjectNode resources = (ObjectNode) metaJson.get("resources");
+            final Iterator<Map.Entry<String, JsonNode>> it = resources.fields();
+            while (it.hasNext()) {
+                JsonNode fileNode = it.next().getValue();
+
+                final FileMetaData fileMetaData = serverMetadataToLocalFileMetaData(projectId, fileNode.toString());
+                changedMeta.add(fileMetaData);
+            }
+
+            return new DeltaResponse(projectId, revision, changedMeta);
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid server delta object.", e);
         }
     }
 

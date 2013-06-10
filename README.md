@@ -8,6 +8,10 @@
 * coverage for all tests `sbt jacoco:cover`
     * the test coverage report is in `target/scala-2.10/jacoco/html/index.html`
 
+#### Integration tests
+1. Start play on localhost:9000 with userMockService
+2. run sbt it:test for the sync daemon on the same machine
+
 ### IDE files generation
 * Eclipse: `sbt eclipse`
 * IntelliJ IDEA: `sbt gen-idea`
