@@ -58,32 +58,23 @@ public class FileChangeActorTestsITest {
 
     @AfterClass
     public static void afterClass() {
-        if (fileOnFS.exists()) {
-            fileOnFS.delete();
-        }
-        Assertions.assertThat(fileOnFS).doesNotExist();
+        deleteTestFile();
     }
 
     @Before
     public void setUp() {
-        if (fileOnFS.exists()) {
-            fileOnFS.delete();
-        }
-        Assertions.assertThat(fileOnFS).doesNotExist();
+        deleteTestFile();
     }
 
     @After
     public void tearDown() throws IOException {
+        deleteTestFile();
         //put new.mm on server
         FileUtils.copyFile(testFile, fileOnFS);
-        final FileMetaData newMeta = FileMetaData.file(filePath, testFileHash, projectId, false, getCurrentRevisionOnServerOfTestfile());
+        final FileMetaData newMeta = FileMetaData.file(filePath, testFileHash, projectId, false, getCurrentRevisionOnServerOfTestFile());
         clientService.upload(user, project, fileMetaData);
 
-        //delete locally
-        if (fileOnFS.exists()) {
-            fileOnFS.delete();
-        }
-        Assertions.assertThat(fileOnFS).doesNotExist();
+        deleteTestFile();
     }
 
     @Test
@@ -103,10 +94,10 @@ public class FileChangeActorTestsITest {
         final String hash = hashAlgorithm.generate(fileOnFS);
 
         //put entry in db
-        indexDbService.save(FileMetaData.file(filePath, hash, projectId, true, getCurrentRevisionOnServerOfTestfile()));
+        indexDbService.save(FileMetaData.file(filePath, hash, projectId, true, getCurrentRevisionOnServerOfTestFile()));
 
         //delete
-        final FileMetaData deletedServerMeta = FileMetaData.file(filePath, "", projectId, true, getCurrentRevisionOnServerOfTestfile() + 1);
+        final FileMetaData deletedServerMeta = FileMetaData.file(filePath, "", projectId, true, getCurrentRevisionOnServerOfTestFile() + 1);
         new JavaTestKit(actorSystem) {{
             fileChangeActor.tell(new Messages.FileChangedOnServer(project, deletedServerMeta), getRef());
             expectNoMsg();
@@ -122,7 +113,7 @@ public class FileChangeActorTestsITest {
         FileUtils.write(fileOnFS, oldContent);
 
         final String fileHash = hashAlgorithm.generate(fileOnFS);
-        final Long currentRev = getCurrentRevisionOnServerOfTestfile();
+        final Long currentRev = getCurrentRevisionOnServerOfTestFile();
         indexDbService.save(FileMetaData.file(filePath, fileHash, projectId, false, currentRev - 1));
 
         final FileMetaData newMeta = FileMetaData.file(filePath, testFileHash, projectId, false, currentRev);
@@ -135,6 +126,21 @@ public class FileChangeActorTestsITest {
     }
 
     @Test
+    public void testFileUpdatedOnServerToFolder() throws IOException {
+        final Long revision = getCurrentRevisionOnServerOfTestFile();
+        //clientService.delete(user,project,FileMetaData.file(filePath,testFileHash,projectId,true,revision));
+        final FileMetaData newMeta = FileMetaData.file(filePath, "", projectId, true, revision);
+        indexDbService.save(newMeta);
+        final FileMetaData folderMeta = FileMetaData.folder(projectId, filePath, false, revision + 1);
+        new JavaTestKit(actorSystem) {{
+            fileChangeActor.tell(new Messages.FileChangedOnServer(project, folderMeta), getRef());
+            expectNoMsg();
+        }};
+
+        Assertions.assertThat(fileOnFS).isDirectory();
+    }
+
+    @Test
     public void testFileUpdatedOnServerThanLocalSameTime() {
 
     }
@@ -144,7 +150,15 @@ public class FileChangeActorTestsITest {
 
     }
 
-    private Long getCurrentRevisionOnServerOfTestfile() {
+    private Long getCurrentRevisionOnServerOfTestFile() {
         return clientService.getCurrentFileMetaData(user, fileMetaData).getRevision();
+    }
+
+    private static void deleteTestFile() {
+        //delete locally
+        if (fileOnFS.exists()) {
+            fileOnFS.delete();
+        }
+        Assertions.assertThat(fileOnFS).doesNotExist();
     }
 }

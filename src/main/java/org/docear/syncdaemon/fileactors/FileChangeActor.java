@@ -81,7 +81,8 @@ public class FileChangeActor extends UntypedActor {
                 downloadAndPutFile(project, fileMetaDataServer);
             }
             // check if file is as said in DB
-            else if (fileMetaDataFS.getHash().equals(fileFileMetaDataDB.getHash())) {
+            else if ((fileMetaDataFS == null && fileFileMetaDataDB.isDeleted()) ||
+                     fileMetaDataFS.getHash().equals(fileFileMetaDataDB.getHash())) {
                 //YES
                 //check if indexDB is different than server
                 if (fileFileMetaDataDB.getRevision() != fileMetaDataServer.getRevision()) {
@@ -92,7 +93,12 @@ public class FileChangeActor extends UntypedActor {
                         deleteFile(project, fileMetaDataFS);
                     } else {
                         //upserted
-                        downloadAndPutFile(project, fileMetaDataServer);
+                        //check if folder or file
+                        if(fileMetaDataServer.isFolder()) {
+                            getFile(project,fileMetaDataServer).mkdir();
+                        } else {
+                            downloadAndPutFile(project, fileMetaDataServer);
+                        }
                         //put metadata
                         indexDbService.save(fileMetaDataServer);
                     }

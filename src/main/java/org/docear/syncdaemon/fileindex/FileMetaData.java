@@ -23,8 +23,8 @@ public final class FileMetaData {
         this.revision = revision;
     }
     
-    public static FileMetaData folder(String projectId, String path, boolean isDeleted) {
-        return new FileMetaData(path, null, projectId, true, isDeleted, 0);
+    public static FileMetaData folder(String projectId, String path, boolean isDeleted, long revision) {
+        return new FileMetaData(path, null, projectId, true, isDeleted, revision);
     }
 
     public static FileMetaData file(String path, String hash, String projectId, boolean isDeleted, long revision) {
