@@ -1,23 +1,22 @@
 package org.docear.syncdaemon;
 
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-
-import java.lang.reflect.Constructor;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
+import akka.actor.*;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import org.docear.syncdaemon.client.ClientService;
+import org.docear.syncdaemon.fileactors.FileChangeActor;
+import org.docear.syncdaemon.fileactors.Messages;
+import org.docear.syncdaemon.fileindex.FileMetaData;
+import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
+import java.lang.reflect.Constructor;
+import java.util.*;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class Daemon {
     private static final Logger logger = LoggerFactory.getLogger(Daemon.class);
@@ -26,6 +25,8 @@ public class Daemon {
     private List<Plugin> plugins = new LinkedList<Plugin>();
     private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = new HashMap<Class, Object>();
 
+
+    private User user = new User("Julius","Julius-token");
     private ActorSystem actorSystem;
 
     private ActorRef fileChangeActor;
@@ -37,6 +38,7 @@ public class Daemon {
 
     public Daemon(Config config) {
         this.config = config;
+        setupActors();
         setupPlugins();
         //TODO instantiate fileChangeActor
     }
@@ -58,6 +60,20 @@ public class Daemon {
             plugins.add(plugin);
         }
     }
+
+    public void setupActors() {
+        actorSystem = ActorSystem.apply();
+
+        fileChangeActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
+            @Override
+            public Actor create() throws Exception {
+                return (UntypedActor) new FileChangeActor(service(ClientService.class), service(IndexDbService.class), getUser());
+            }
+        }), "fileChangeActor");
+
+
+    }
+
 
     private Plugin instantiatePlugin(String className) {
         try {
@@ -153,8 +169,7 @@ public class Daemon {
     }
     
     public User getUser(){
-    	// TODO implement!
-    	return null;
+    	return user;
     }
 
     /* in package scope for testing */

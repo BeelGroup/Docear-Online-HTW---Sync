@@ -72,10 +72,14 @@ public class FileChangeActor extends UntypedActor {
             final FileMetaData fileMetaDataServer = fileChangedOnServer.getFileMetaDataOnServer();
 
             final FileMetaData fileFileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataServer);
-            final FileMetaData fileMetaDataFS = getFSMetadata(project, fileFileMetaDataDB);
+            final FileMetaData fileMetaDataFS = getFSMetadata(project, fileMetaDataServer);
 
+            // check if file is NOT locally present
+            if(fileMetaDataFS == null && fileFileMetaDataDB == null) {
+                downloadAndPutFile(project, fileMetaDataServer);
+            }
             // check if file is as said in DB
-            if (fileMetaDataFS.getHash().equals(fileFileMetaDataDB.getHash())) {
+            else if (fileMetaDataFS.getHash().equals(fileFileMetaDataDB.getHash())) {
                 //YES
                 //check if indexDB is different than server
                 if (fileFileMetaDataDB.getRevision() != fileMetaDataServer.getRevision()) {
@@ -83,7 +87,7 @@ public class FileChangeActor extends UntypedActor {
                     //check if file shall be deleted or upserted
                     if (fileMetaDataServer.isDeleted()) {
                         //deleted
-                        deleteFile(project,fileMetaDataFS);
+                        deleteFile(project, fileMetaDataFS);
                     } else {
                         //upserted
                         downloadAndPutFile(project, fileMetaDataServer);
@@ -94,23 +98,27 @@ public class FileChangeActor extends UntypedActor {
             }
         } else if (message instanceof User) {
             this.user = (User) message;
-        } else if (message instanceof Messages.ProjectDeleted){
-        	final Messages.ProjectDeleted projectDeleted = (Messages.ProjectDeleted) message;
-        	
-        	// TODO remove files from FS
-        	
-        	indexDbService.deleteProject(projectDeleted.getProject().getId());
-        } else if (message instanceof Messages.ProjectAdded){
-        	// TODO implement        	
+        } else if (message instanceof Messages.ProjectDeleted) {
+            final Messages.ProjectDeleted projectDeleted = (Messages.ProjectDeleted) message;
+
+            // TODO remove files from FS
+
+            indexDbService.deleteProject(projectDeleted.getProject().getId());
+        } else if (message instanceof Messages.ProjectAdded) {
+            // TODO implement
         }
     }
 
     private FileMetaData getFSMetadata(Project project, FileMetaData fileMetaData) throws IOException {
         final String path = project.getRootPath() + File.separator + fileMetaData.getPath();
         final File file = new File(path);
-        final String hash = hashAlgorithm.generate(file);
+        if (file.exists()) {
+            final String hash = hashAlgorithm.generate(file);
 
-        return new FileMetaData(fileMetaData.getPath(), hash, project.getId(), fileMetaData.isFolder(), fileMetaData.isDeleted(), fileMetaData.getRevision());
+            return new FileMetaData(fileMetaData.getPath(), hash, project.getId(), fileMetaData.isFolder(), fileMetaData.isDeleted(), fileMetaData.getRevision());
+        } else {
+            return null;
+        }
     }
 
     private void deleteFile(Project project, FileMetaData fileMetaData) throws IOException {
@@ -124,7 +132,7 @@ public class FileChangeActor extends UntypedActor {
         InputStream in = null;
         OutputStream out = null;
         try {
-            deleteFile(project,fileMetaData);
+            deleteFile(project, fileMetaData);
 
             final File file = getFile(project, fileMetaData);
 
