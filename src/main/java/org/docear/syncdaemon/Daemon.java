@@ -1,17 +1,24 @@
 package org.docear.syncdaemon;
 
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+
+import java.lang.reflect.Constructor;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-import java.util.*;
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 public class Daemon {
     private static final Logger logger = LoggerFactory.getLogger(Daemon.class);
@@ -143,6 +150,11 @@ public class Daemon {
 
     public ActorSystem getActorSystem() {
         return actorSystem;
+    }
+    
+    public User getUser(){
+    	// TODO implement!
+    	return null;
     }
 
     /* in package scope for testing */
