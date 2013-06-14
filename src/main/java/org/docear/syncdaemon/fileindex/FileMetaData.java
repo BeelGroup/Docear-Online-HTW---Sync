@@ -14,10 +14,6 @@ public final class FileMetaData {
      */
     final long revision;
 
-    public static FileMetaData newFile(String path, String hash, String projectId) {
-        return new FileMetaData(path, hash, projectId, false, false, 0);
-    }
-
     public FileMetaData(String path, String hash, String projectId, boolean isFolder, boolean isDeleted, long revision) {
         this.path = FilenameUtils.normalizeNoEndSeparator(FilenameUtils.separatorsToSystem(path));
         this.hash = hash;
@@ -27,20 +23,18 @@ public final class FileMetaData {
         this.revision = revision;
     }
     
-    /**
-     * Constructor for folder
-     * @param projectId
-     * @param path
-     */
-    public FileMetaData(String projectId, String path, boolean isDeleted) {
-    	this.path = FilenameUtils.normalizeNoEndSeparator(FilenameUtils.separatorsToSystem(path));
-        this.hash = null;
-        this.projectId = projectId;
-        this.isFolder = true;
-        this.isDeleted = isDeleted;
-        this.revision = 0;
+    public static FileMetaData folder(String projectId, String path, boolean isDeleted) {
+        return new FileMetaData(path, null, projectId, true, isDeleted, 0);
     }
 
+    public static FileMetaData file(String path, String hash, String projectId, boolean isDeleted, long revision) {
+        return new FileMetaData(path, hash, projectId, false, isDeleted, revision);
+    }
+
+    public static FileMetaData newFile(String path, String hash, String projectId) {
+        return new FileMetaData(path, hash, projectId, false, false, 0);
+    }
+    
     public String getPath() {
         return path;
     }
