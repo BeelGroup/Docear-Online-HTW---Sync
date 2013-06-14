@@ -6,4 +6,6 @@ import java.io.IOException;
 public interface HashAlgorithm {
 
 	public String generate(File file) throws IOException;
+
+    public boolean isValidHash(String hash);
 }
