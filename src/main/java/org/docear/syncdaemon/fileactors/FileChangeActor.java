@@ -1,6 +1,8 @@
 package org.docear.syncdaemon.fileactors;
 
+import akka.actor.ActorSystem;
 import akka.actor.UntypedActor;
+import org.apache.commons.io.IOUtils;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.UploadResponse;
 import org.docear.syncdaemon.fileindex.FileMetaData;
@@ -9,16 +11,17 @@ import org.docear.syncdaemon.hashing.SHA2;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
+import scala.concurrent.duration.Duration;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 public class FileChangeActor extends UntypedActor {
 
+    private final HashAlgorithm hashAlgorithm = new SHA2();
     private ClientService clientService;
     private IndexDbService indexDbService;
     private User user;
-    private final HashAlgorithm hashAlgorithm = new SHA2();
 
     public FileChangeActor(ClientService clientService, IndexDbService indexDbService, User user) {
         this.clientService = clientService;
@@ -38,7 +41,7 @@ public class FileChangeActor extends UntypedActor {
             final FileMetaData fileMetaDataFS = fileChangedLocally.getFileMetaDataLocally();
 
             //validate hash
-            if(!hashAlgorithm.isValidHash(fileMetaDataFS.getHash())) {
+            if (!hashAlgorithm.isValidHash(fileMetaDataFS.getHash())) {
                 throw new IllegalArgumentException("No valid hash for new file");
             }
 
@@ -69,14 +72,19 @@ public class FileChangeActor extends UntypedActor {
             final FileMetaData fileMetaDataServer = fileChangedOnServer.getFileMetaDataOnServer();
 
             final FileMetaData fileFileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataServer);
+            final FileMetaData fileMetaDataFS = getFSMetadata(project, fileFileMetaDataDB);
 
-
-            final FileMetaData fileMetaDataFS = getFSMetadata(project,fileFileMetaDataDB);
+            // check if file is as said in DB
+            if (fileMetaDataFS.getHash().equals(fileFileMetaDataDB.getHash())) {
+                //YES
+                //check if indexDB is different than server
+                if (fileFileMetaDataDB.getRevision() != fileMetaDataServer.getRevision()) {
+                    //YES
+                    //download and put file
+                    downloadAndPutFile(project,fileMetaDataServer);
+                }
+            }
             /**
-             * see https://docs.google.com/document/d/17ZmlL8di7RWdSowJr-jXrSd7WBkubZ9d_kCxYZN-_vc/edit#
-             * 1. Datei anschauen
-             1a. Schauen ob anders als in Index-DB
-             1.2a NEIN
              1.2b Schauen ob Index-DB anders als Server
              1.2.1a JA
              1.2.1b Akteuelle Datei von Server ziehen
@@ -92,10 +100,33 @@ public class FileChangeActor extends UntypedActor {
     }
 
     private FileMetaData getFSMetadata(Project project, FileMetaData fileMetaData) throws IOException {
-        final String path = project.getRootPath()+ File.separator+fileMetaData.getPath();
+        final String path = project.getRootPath() + File.separator + fileMetaData.getPath();
         final File file = new File(path);
         final String hash = hashAlgorithm.generate(file);
 
-        return new FileMetaData(fileMetaData.getPath(),hash,project.getId(),fileMetaData.isFolder(),fileMetaData.isDeleted(),fileMetaData.getRevision());
+        return new FileMetaData(fileMetaData.getPath(), hash, project.getId(), fileMetaData.isFolder(), fileMetaData.isDeleted(), fileMetaData.getRevision());
+    }
+
+    private void downloadAndPutFile(Project project, FileMetaData fileMetaData) throws IOException {
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            final String path = project.getRootPath() + File.separator + fileMetaData.getPath();
+            final File file = new File(path);
+            if (file.exists() && !file.delete()) {
+                //problem deleting file. May be locked
+                //scheduling a retry in 30 seconds
+                final ActorSystem system = getContext().system();
+                system.scheduler().scheduleOnce(Duration.apply(30, TimeUnit.SECONDS), getSelf(), new Messages.FileChangedOnServer(project, fileMetaData), system.dispatcher());
+                throw new IOException("Could not delete file. It may be locked. Rescheduled event in 30 seconds.");
+            }
+
+            in = clientService.download(user, fileMetaData);
+            out = new FileOutputStream(file);
+
+            IOUtils.copy(in, out);
+        } finally {
+            IOUtils.closeQuietly(in);
+        }
     }
 }
