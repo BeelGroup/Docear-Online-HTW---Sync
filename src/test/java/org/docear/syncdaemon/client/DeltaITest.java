@@ -35,7 +35,7 @@ public class DeltaITest {
 
     @Test
     public void testDeltaResponse() {
-        final DeltaResponse deltaResponse = clientService.delta(user,project);
+        final DeltaResponse deltaResponse = clientService.delta(user, project.getId(), project.getRevision());
         Assertions.assertThat(deltaResponse.getServerMetaDatas().size()).isGreaterThan(5);
     }
 }

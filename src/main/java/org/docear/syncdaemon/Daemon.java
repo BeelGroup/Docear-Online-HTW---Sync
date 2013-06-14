@@ -1,6 +1,5 @@
 package org.docear.syncdaemon;
 
-
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import java.lang.reflect.Constructor;
@@ -30,6 +29,7 @@ public class Daemon {
     private ActorSystem actorSystem;
 
     private ActorRef fileChangeActor;
+    private ActorRef listenForUpdatesActor;
 
     public Daemon() {
         this(ConfigFactory.load());

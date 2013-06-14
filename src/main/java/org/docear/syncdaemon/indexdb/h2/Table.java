@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public enum Table {
-    PROJECTS("projects", "id VARCHAR(500), revision BIGINT, PRIMARY KEY (id)"),
+    PROJECTS("projects", "id VARCHAR(500), rootpath VARCHAR(500), revision BIGINT, PRIMARY KEY (id)"),
     FILES("files", "path VARCHAR(500), " +
             "hash CHAR(128), " +
             "projectId VARCHAR(500), " +

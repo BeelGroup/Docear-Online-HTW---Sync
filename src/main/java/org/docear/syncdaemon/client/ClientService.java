@@ -36,6 +36,5 @@ public interface ClientService {
      */
     FileMetaData getCurrentFileMetaData(User user, FileMetaData fileMetaData);
 
-    DeltaResponse delta(User user, Project project);
-    //TODO delta method
+    DeltaResponse delta(User user, String projectId, Long sinceRevision);
 }

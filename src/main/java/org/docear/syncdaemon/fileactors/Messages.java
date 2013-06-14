@@ -47,45 +47,32 @@ public class Messages {
     }
 
     public static class ProjectChange{
-        private final String projectId;
+        private final Project project;
 
-        public ProjectChange(String projectId) {
-            this.projectId = projectId;
+        public ProjectChange(Project project) {
+            this.project = project;
         }
 
-        public String getProjectId() {
-            return projectId;
+        public Project getProject() {
+            return project;
         }
     }
     
     public static final class ProjectAdded extends ProjectChange {
-    	private final Long revision;
-    	public ProjectAdded(String projectId, Long revision) {
-            super(projectId);
-            this.revision = revision;
+    	public ProjectAdded(Project project) {
+            super(project);
         }
-    	
-    	public Long getRevision() {
-			return revision;
-		}
     }
 
     public static final class ProjectUpdated extends ProjectChange {
-    	private final Long revision;
-    	
-    	public ProjectUpdated(String projectId, Long revision) {
-            super(projectId);
-            this.revision = revision;
+    	public ProjectUpdated(Project project) {
+            super(project);
         }
-    	
-    	public Long getRevision() {
-			return revision;
-		}
     }
     
     public static final class ProjectDeleted extends ProjectChange {
-    	public ProjectDeleted(String projectId) {
-            super(projectId);
+    	public ProjectDeleted(Project project) {
+            super(project);
         }
     }
 

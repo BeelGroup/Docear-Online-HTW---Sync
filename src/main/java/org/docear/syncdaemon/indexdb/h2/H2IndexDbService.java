@@ -94,6 +94,74 @@ public class H2IndexDbService implements IndexDbService {
             }
         });
     }
+    
+    @Override
+	public String getProjectRootPath(final String projectId) throws PersistenceException {
+        return execute(new WithQuery<String>() {
+            @Override
+            public String sql() {
+                return "SELECT rootpath FROM " + Table.PROJECTS.getName() + " WHERE id = ?";
+            }
+
+            @Override
+            public void statementPreparation(PreparedStatement statement) throws SQLException {
+                statement.setString(1, projectId);
+            }
+
+            @Override
+            public String extractResult(ResultSet resultSet) throws SQLException {
+                return resultSet.getString(1);
+            }
+        });	
+    }
+    
+    @Override
+	public void deleteProject(final String projectId) throws PersistenceException {
+        // delete project from PROJECTS table
+    	execute(new WithStatement<Object>() {
+            @Override
+            public String sql() {
+            	return "DELETE FROM " + Table.PROJECTS.getName() + " WHERE id = ?";
+            }
+
+            @Override
+            public void statementPreparation(PreparedStatement statement) throws SQLException {
+            	statement.setString(1, projectId);
+            }
+        });
+    	
+        // delete project from FILES table
+    	execute(new WithStatement<Object>() {
+            @Override
+            public String sql() {
+            	return "DELETE FROM " + Table.FILES.getName() + " WHERE projectId = ?";
+            }
+
+            @Override
+            public void statementPreparation(PreparedStatement statement) throws SQLException {
+            	statement.setString(1, projectId);
+            }
+        });
+	}
+    
+
+	@Override
+	public void addProject(final String projectId, final String rootPath) throws PersistenceException {
+        // add project to PROJECTS table
+    	execute(new WithStatement<Object>() {
+            @Override
+            public String sql() {
+            	return "INSERT INTO " + Table.PROJECTS.getName() + " VALUES (?, ?, ?)";
+            }
+
+            @Override
+            public void statementPreparation(PreparedStatement statement) throws SQLException {
+            	statement.setString(1, projectId);
+            	statement.setString(2, rootPath);
+            	statement.setLong(3, 0);
+            }        
+    	});
+	}
 
     public Connection getConnection() throws SQLException {
         return DriverManager.getConnection("jdbc:h2:mem:docearsync", "", "");//TODO as file database in prod, in test in memory
