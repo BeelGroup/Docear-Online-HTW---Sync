@@ -219,12 +219,11 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     }
 
     @Override
-    public DeltaResponse delta(User user, Project project) {
-        final String projectId = project.getId();
+    public DeltaResponse delta(User user, String projectId, Long sinceRevision) {
 
         final WebResource request = preparedResource(projectId, user).path("delta");
         final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-        formData.add("projectRevision", project.getRevision() + "");
+        formData.add("projectRevision", sinceRevision + "");
 
         final ClientResponse response = request.post(ClientResponse.class, formData);
 

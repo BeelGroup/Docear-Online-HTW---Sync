@@ -82,27 +82,16 @@ public class FileChangeActor extends UntypedActor {
                     //YES
                     //download and put file
                     downloadAndPutFile(project,fileMetaDataServer);
+                    //put metadata
+                    indexDbService.save(fileMetaDataServer);
                 }
             }
-            /**
-             1.2b Schauen ob Index-DB anders als Server
-             1.2.1a JA
-             1.2.1b Akteuelle Datei von Server ziehen
-             1.2.1c Index-DB mit Metadaten von server updaten
-
-             1.2.2a NEIN
-             1.2.2b alles up to date, nichts tun
-             */
-        } else if (message instanceof Messages.ProjectUpdated){
-        	
-        } else if (message instanceof Messages.ProjectAdded){
-        	
-        } else if (message instanceof Messages.ProjectDeleted){
-        	
-        } else if (message instanceof User) {
+        }  else if (message instanceof User) {
             this.user = (User) message;
         }
     }
+
+    //private void FsDifferentToDB(Project project, )
 
     private FileMetaData getFSMetadata(Project project, FileMetaData fileMetaData) throws IOException {
         final String path = project.getRootPath() + File.separator + fileMetaData.getPath();
