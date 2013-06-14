@@ -2,17 +2,16 @@ package org.docear.syncdaemon.fileindex;
 
 import java.util.List;
 
-import org.docear.syncdaemon.indexdb.h2.H2IndexDbService;
+import org.docear.syncdaemon.fileactors.Messages.FileChangedLocally;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.PersistenceException;
-import org.docear.syncdaemon.messages.FileChangeEvent;
-import org.docear.syncdaemon.messages.FileConflictEvent;
+import org.docear.syncdaemon.indexdb.h2.H2IndexDbService;
 import org.docear.syncdaemon.projects.Project;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FileIndexServiceImpl extends UntypedActor implements
         FileIndexService {
@@ -29,7 +28,7 @@ public class FileIndexServiceImpl extends UntypedActor implements
     public void onReceive(Object message) throws Exception {
         if (message instanceof StartScanMessage) {
             this.project = ((StartScanMessage) message).getProject();
-            this.recipient = ((StartScanMessage) message).getServerSynchronisationActor();
+            this.recipient = ((StartScanMessage) message).getFileChangeActor();
             scanProject();
         }
     }
@@ -46,7 +45,8 @@ public class FileIndexServiceImpl extends UntypedActor implements
                 for (FileMetaData fmdFromScan : files) {
                     final FileMetaData fmdFromIndexDb = indexDbService.getFileMetaData(fmdFromScan);
                     if (fmdFromScan.isChanged(fmdFromIndexDb)) {
-                        sendConflictMesage(fmdFromScan);
+                        // TODO is this case relevant?
+                    	//sendConflictMesage(fmdFromScan);
                     } else {
                         sendFileChangedMessage(fmdFromScan);
                     }
@@ -57,13 +57,8 @@ public class FileIndexServiceImpl extends UntypedActor implements
         }
     }
 
-    private void sendConflictMesage(final FileMetaData fmd) {
-        final FileConflictEvent message = new FileConflictEvent(fmd.getPath(),project.getId());
-        recipient.tell(message, recipient);
-    }
-
     private void sendFileChangedMessage(final FileMetaData fmd) {
-        final FileChangeEvent message = new FileChangeEvent(fmd.getPath(),project.getId());
+    	final FileChangedLocally message = new FileChangedLocally(this.project, fmd);
         recipient.tell(message, recipient);
     }
 

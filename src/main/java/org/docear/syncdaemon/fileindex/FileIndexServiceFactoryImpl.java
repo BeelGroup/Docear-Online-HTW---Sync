@@ -14,8 +14,8 @@ public class FileIndexServiceFactoryImpl implements FileIndexServiceFactory {
     }
 
     @Override
-    public void create(Project project, ActorRef serverSynchronisationActor) {
+    public void create(Project project, ActorRef fileChangeActor) {
         ActorRef fileIndexService = system.actorOf(new Props(FileIndexServiceImpl.class));
-        fileIndexService.tell(new StartScanMessage(project, serverSynchronisationActor));
+        fileIndexService.tell(new StartScanMessage(project, fileChangeActor));
     }
 }

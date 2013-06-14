@@ -5,5 +5,5 @@ import org.docear.syncdaemon.projects.Project;
 import akka.actor.ActorRef;
 
 public interface FileIndexServiceFactory {
-    void create(Project project, ActorRef serverSynchronisationActor);
+    void create(Project project, ActorRef fileChangeActor);
 }

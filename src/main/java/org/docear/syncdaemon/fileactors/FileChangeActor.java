@@ -93,10 +93,15 @@ public class FileChangeActor extends UntypedActor {
              1.2.2a NEIN
              1.2.2b alles up to date, nichts tun
              */
+        } else if (message instanceof Messages.ProjectUpdated){
+        	
+        } else if (message instanceof Messages.ProjectAdded){
+        	
+        } else if (message instanceof Messages.ProjectDeleted){
+        	
         } else if (message instanceof User) {
             this.user = (User) message;
         }
-        //TODO project added, removed
     }
 
     private FileMetaData getFSMetadata(Project project, FileMetaData fileMetaData) throws IOException {
