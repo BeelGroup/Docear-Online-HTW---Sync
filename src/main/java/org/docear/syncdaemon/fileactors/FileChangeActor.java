@@ -2,6 +2,8 @@ package org.docear.syncdaemon.fileactors;
 
 import akka.actor.ActorSystem;
 import akka.actor.UntypedActor;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.UploadResponse;
@@ -97,11 +99,17 @@ public class FileChangeActor extends UntypedActor {
         } else if (message instanceof Messages.ProjectDeleted){
         	final Messages.ProjectDeleted projectDeleted = (Messages.ProjectDeleted) message;
         	
-        	// TODO remove files from FS
+        	// remove files from FS
+            FileUtils.deleteDirectory(new File(projectDeleted.getProject().getRootPath()));
         	
         	indexDbService.deleteProject(projectDeleted.getProject().getId());
         } else if (message instanceof Messages.ProjectAdded){
-        	// TODO implement        	
+        	final Messages.ProjectAdded projectAdded = (Messages.ProjectAdded) message;
+        	
+        	// create root dir in FS
+        	FileUtils.forceMkdir(new File(projectAdded.getProject().getRootPath()));
+        	
+        	indexDbService.addProject(projectAdded.getProject().getId(), projectAdded.getProject().getRootPath());   
         }
     }
 
