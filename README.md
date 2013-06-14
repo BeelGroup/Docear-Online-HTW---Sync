@@ -10,6 +10,7 @@
 
 #### Integration tests
 1. Start play with `sbt -Dconfig.file=conf/syncdaemon.conf compile run`
+    * you need to restart play for every test run
 2. run sbt it:test for the sync daemon on the same machine
 
 ### IDE files generation

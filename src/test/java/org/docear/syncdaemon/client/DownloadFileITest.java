@@ -35,14 +35,14 @@ public class DownloadFileITest {
         final String projectId = "507f191e810c19729de860ea";
         final Project project = new Project(projectId, rootPath, 8);
 
-        final String filename = "/rootFile.pptx";
+        final String filename = File.separator+"rootFile.pptx";
         fileMetaData = new FileMetaData(filename, "", projectId, false, false, 0);
 
         final UploadResponse initialUploadResponse = clientService.upload(user, project, fileMetaData);
     }
 
 	@Test
-	public void testGetFile() throws IOException {
+	public void testDownloadFile() throws IOException {
 		final InputStream inStream = clientService.download(user, fileMetaData);
 		final String fileContent = IOUtils.toString(inStream);
 		IOUtils.closeQuietly(inStream);

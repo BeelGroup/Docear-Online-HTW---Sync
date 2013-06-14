@@ -13,7 +13,12 @@ public class SHA2 implements HashAlgorithm {
 		return getFileCheckSum(file, createMessageDigest());
 	}
 
-	/**
+    @Override
+    public boolean isValidHash(String hash) {
+        return hash.length() == 64;
+    }
+
+    /**
 	 * taken from http://www.mkyong.com/java/java-sha-hashing-example/
 	 * 
 	 * @return

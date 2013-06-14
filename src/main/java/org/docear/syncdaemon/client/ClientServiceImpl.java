@@ -89,16 +89,20 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
             ClientResponse response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
 
-            final FileMetaData newFileMeta = serverMetadataToLocalFileMetaData(projectId, response.getEntity(String.class));
-            // check that file is no conflicted copy
-            if (newFileMeta.getPath().equals(fileMetaData.getPath())) {
-                // equal path => no conflict
-                return new UploadResponse(newFileMeta);
+            if (response.getStatus() == 200) {
+                final FileMetaData newFileMeta = serverMetadataToLocalFileMetaData(projectId, response.getEntity(String.class));
+                // check that file is no conflicted copy
+                if (newFileMeta.getPath().equals(fileMetaData.getPath())) {
+                    // equal path => no conflict
+                    return new UploadResponse(newFileMeta);
+                } else {
+                    // conflict!
+                    // get additional fileMetaData for original file
+                    final FileMetaData currentOriMetaData = getCurrentFileMetaData(user, fileMetaData);
+                    return new UploadResponse(currentOriMetaData, newFileMeta);
+                }
             } else {
-                // conflict!
-                // get additional fileMetaData for original file
-                final FileMetaData currentOriMetaData = getCurrentFileMetaData(user, fileMetaData);
-                return new UploadResponse(currentOriMetaData, newFileMeta);
+                throw new RuntimeException("Problem uploading file! HTTP Code: "+response.getStatus());
             }
 
         } finally {

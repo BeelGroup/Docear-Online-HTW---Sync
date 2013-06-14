@@ -40,6 +40,10 @@ public class Messages {
             super(project);
             this.fileMetaDataOnServer = fileMetaDataOnServer;
         }
+
+        public FileMetaData getFileMetaDataOnServer() {
+            return fileMetaDataOnServer;
+        }
     }
 
     public static class ProjectChange{
@@ -88,13 +92,13 @@ public class Messages {
     public static final class StartListening {
         private Map<String, Long> projectIdRevisionMap;
 
-        public Map<String, Long> getProjectIdRevisionMap() {
-            return projectIdRevisionMap;
-        }
-
         public StartListening(Map<String, Long> projectIdRevisionMap) {
 
             this.projectIdRevisionMap = projectIdRevisionMap;
+        }
+
+        public Map<String, Long> getProjectIdRevisionMap() {
+            return projectIdRevisionMap;
         }
     }
 }
