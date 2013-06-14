@@ -58,6 +58,6 @@ public class SHA2 implements HashAlgorithm {
 
     @Override
     public boolean isValidHash(String hash) {
-        return hash.length() == 64;
+        return hash.length() == 128;
     }
 }

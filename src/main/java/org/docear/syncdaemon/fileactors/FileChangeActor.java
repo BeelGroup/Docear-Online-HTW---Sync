@@ -42,29 +42,41 @@ public class FileChangeActor extends UntypedActor {
             final Project project = fileChangedLocally.getProject();
             final FileMetaData fileMetaDataFS = fileChangedLocally.getFileMetaDataLocally();
 
-            //validate hash
-            if (!hashAlgorithm.isValidHash(fileMetaDataFS.getHash())) {
-                throw new IllegalArgumentException("No valid hash for new file");
+
+            //validate not null and hash
+            if(fileMetaDataFS == null) {
+                throw new NullPointerException("fileMetaDataFS cannot be null");
+            }
+            if (!fileMetaDataFS.isDeleted() && !fileMetaDataFS.isFolder() && !hashAlgorithm.isValidHash(fileMetaDataFS.getHash())) {
+                throw new IllegalArgumentException("No valid hash for FS file");
             }
 
-            final FileMetaData fileFileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
-            final FileMetaData fileMetaDataServer = clientService.getCurrentFileMetaData(user, fileMetaDataFS);
+            final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
+            //final FileMetaData fileMetaDataServer = clientService.getCurrentFileMetaData(user, fileMetaDataFS);
 
-            //1. show if FS different from DB
-            if (!fileMetaDataFS.getHash().equals(fileFileMetaDataDB.getHash())) {
-                //YES
-                //1.1 Is index-DB up to date
-                if (fileFileMetaDataDB.getRevision() == fileMetaDataServer.getRevision()) {
-                    // YES, up to date
-                    // 1.1.1 push file to server
-                    final UploadResponse uploadResponse = clientService.upload(user, project, fileFileMetaDataDB);
-                    if (uploadResponse.hasConflicts()) {
-                        //CONFLICT (may happen because two people push at the same time)
-                        //TODO handle conflict situation
-                    } else {
-                        //everything is fine, just update the indexDB
-                        indexDbService.save(uploadResponse.getCurrentServerMetaData());
-                    }
+            //1a. look if locally new file
+            if (fileMetaDataDB == null || fileMetaDataDB.isDeleted()) {
+                final UploadResponse uploadResponse = clientService.upload(user,project,fileMetaDataFS);
+                //Conflict?
+                if(uploadResponse.hasConflicts()) {
+                    //download real file, conflicted will be triggered by update listener
+                    downloadAndPutFile(project,uploadResponse.getCurrentServerMetaData());
+                } else {
+                    indexDbService.save(uploadResponse.getCurrentServerMetaData());
+                }
+            }
+            //1b. is locally deleted
+            else if((fileMetaDataFS.isDeleted() && !fileMetaDataDB.isDeleted())) {
+                clientService.delete(user,project,fileMetaDataDB);
+            }
+            //1c. is locally updated file
+            else if(!fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())) {// locally changed)
+                //1b.1 push new file to db
+                final UploadResponse uploadResponse = clientService.upload(user,project,fileMetaDataFS);
+                //check for conflicts
+                if(uploadResponse.hasConflicts()) {
+                    //download correct file, conflicted will be triggered by update listener
+                    downloadAndPutFile(project,uploadResponse.getCurrentServerMetaData());
                 }
             }
         } else if (message instanceof Messages.FileChangedOnServer) {

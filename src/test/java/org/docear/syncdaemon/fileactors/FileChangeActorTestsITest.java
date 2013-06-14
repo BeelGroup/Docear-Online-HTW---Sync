@@ -72,7 +72,7 @@ public class FileChangeActorTestsITest {
         //put new.mm on server
         FileUtils.copyFile(testFile, fileOnFS);
         final FileMetaData newMeta = FileMetaData.file(filePath, testFileHash, projectId, false, getCurrentRevisionOnServerOfTestFile());
-        clientService.upload(user, project, fileMetaData);
+        clientService.upload(user, project, newMeta);
 
         deleteTestFile();
     }
@@ -139,6 +139,73 @@ public class FileChangeActorTestsITest {
 
         Assertions.assertThat(fileOnFS).isDirectory();
     }
+
+    @Test
+    public void testNewFileLocally() throws IOException {
+        final Long currentRevision = getCurrentRevisionOnServerOfTestFile();
+        clientService.delete(user,project,FileMetaData.file(filePath,testFileHash,projectId,true,currentRevision));
+        FileUtils.copyFile(testFile,fileOnFS);
+
+        new JavaTestKit(actorSystem) {{
+            fileChangeActor.tell(new Messages.FileChangedLocally(project,FileMetaData.newFile(filePath,testFileHash,projectId)), getRef());
+            //expectNoMsg(Duration.apply(5, TimeUnit.DAYS));
+            expectNoMsg();
+        }};
+
+        final FileMetaData serverMeta = clientService.getCurrentFileMetaData(user,fileMetaData);
+        Assertions.assertThat(serverMeta.getRevision()).isGreaterThan(currentRevision);
+    }
+
+    @Test
+    public void testFileDeletedLocally() throws IOException {
+        final Long revision = getCurrentRevisionOnServerOfTestFile();
+        indexDbService.save(FileMetaData.file(filePath, testFileHash, projectId, false, revision));
+
+        //delete
+        final FileMetaData deletedLocalMeta = FileMetaData.file(filePath, "", projectId, true, revision);
+        new JavaTestKit(actorSystem) {{
+            fileChangeActor.tell(new Messages.FileChangedLocally(project, deletedLocalMeta), getRef());
+            expectNoMsg();
+        }};
+
+        final FileMetaData serverMeta = clientService.getCurrentFileMetaData(user,fileMetaData);
+        Assertions.assertThat(serverMeta.isDeleted()).isTrue();
+    }
+//
+//    @Test
+//    public void testFileUpdatedOnServer() throws IOException {
+//        final String oldContent = "This is a file";
+//        //prepare
+//        FileUtils.write(fileOnFS, oldContent);
+//
+//        final String fileHash = hashAlgorithm.generate(fileOnFS);
+//        final Long currentRev = getCurrentRevisionOnServerOfTestFile();
+//        indexDbService.save(FileMetaData.file(filePath, fileHash, projectId, false, currentRev - 1));
+//
+//        final FileMetaData newMeta = FileMetaData.file(filePath, testFileHash, projectId, false, currentRev);
+//        new JavaTestKit(actorSystem) {{
+//            fileChangeActor.tell(new Messages.FileChangedOnServer(project, newMeta), getRef());
+//            expectNoMsg();
+//        }};
+//
+//        Assertions.assertThat(fileOnFS).hasSameContentAs(testFile);
+//    }
+//
+//    @Test
+//    public void testFileUpdatedOnServerToFolder() throws IOException {
+//        final Long revision = getCurrentRevisionOnServerOfTestFile();
+//        //clientService.delete(user,project,FileMetaData.file(filePath,testFileHash,projectId,true,revision));
+//        final FileMetaData newMeta = FileMetaData.file(filePath, "", projectId, true, revision);
+//        indexDbService.save(newMeta);
+//        final FileMetaData folderMeta = FileMetaData.folder(projectId, filePath, false, revision + 1);
+//        new JavaTestKit(actorSystem) {{
+//            fileChangeActor.tell(new Messages.FileChangedOnServer(project, folderMeta), getRef());
+//            expectNoMsg();
+//        }};
+//
+//        Assertions.assertThat(fileOnFS).isDirectory();
+//    }
+
 
     @Test
     public void testFileUpdatedOnServerThanLocalSameTime() {
