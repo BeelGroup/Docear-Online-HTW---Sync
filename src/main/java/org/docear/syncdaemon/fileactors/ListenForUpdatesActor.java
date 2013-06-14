@@ -32,7 +32,7 @@ public class ListenForUpdatesActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof Messages.StartListening) {
-        	clientService.listenForUpdates(user, projectIdRevisionMap, this.getSelf());
+        	clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf());
         } else if(message instanceof ListenForUpdatesResponse) {
         	ListenForUpdatesResponse response = (ListenForUpdatesResponse)message;
         	
@@ -60,7 +60,7 @@ public class ListenForUpdatesActor extends UntypedActor {
         	// listen again
         	this.getSelf().tell("listen", this.getSelf());
         } else if(message.equals("listen")) {
-            //TODO listen again
+
         }
     }
 }

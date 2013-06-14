@@ -53,7 +53,11 @@ public class FileChangeActor extends UntypedActor {
             1.2.2a NEIN
             1.2.2b alles up to date, nichts tun
              */
-        } else if (message instanceof Messages.ProjectChangedOnServer){
+        } else if (message instanceof Messages.ProjectUpdated){
+        	
+        } else if (message instanceof Messages.ProjectAdded){
+        	
+        } else if (message instanceof Messages.ProjectDeleted){
         	
         }
         //TODO project added, removed

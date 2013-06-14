@@ -6,6 +6,7 @@ import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.Plugin;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.ClientServiceImpl;
+import org.docear.syncdaemon.fileactors.FileChangeActor;
 import org.docear.syncdaemon.indexdb.h2.H2IndexDbService;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.projects.LocalProjectService;
@@ -24,9 +25,9 @@ public class FileIndexPlugin extends Plugin{
         final IndexDbService indexDbService = daemon().service(H2IndexDbService.class);
         final List<Project> projects = projectService.getProjects();
         final FileIndexServiceFactory factory = daemon().service(FileIndexServiceFactoryImpl.class);
-        final ServerSynchronisationActor serverSyncActor = new ServerSynchronisationActor(clientService, indexDbService);
+        final FileChangeActor fileChangeActor = new FileChangeActor(clientService, indexDbService);
         for (final Project project : projects) {
-            factory.create(project, serverSyncActor.getSelf());
+            factory.create(project, fileChangeActor.getSelf());
         }
     }
 
