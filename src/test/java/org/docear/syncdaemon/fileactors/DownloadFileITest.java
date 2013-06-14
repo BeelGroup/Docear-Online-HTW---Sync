@@ -28,7 +28,7 @@ public class DownloadFileITest {
         daemon.onStart();
         final ActorRef fileChangeActor = daemon.getFileChangeActor();
         final Project project = new Project("507f191e810c19729de860ea","D:\\p1",0L);
-        final FileMetaData fileMetaData = new FileMetaData("507f191e810c19729de860ea", "/new.mm", false);
+        final FileMetaData fileMetaData = FileMetaData.file("/new.mm","","507f191e810c19729de860ea", false, 0L);
         
         
         new JavaTestKit(actorSystem) {{

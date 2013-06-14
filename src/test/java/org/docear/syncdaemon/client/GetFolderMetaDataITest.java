@@ -17,7 +17,7 @@ public class GetFolderMetaDataITest {
 	public void testGetFolderMetaData() {
 		final Daemon deamon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
 		final ClientService clientService = deamon.service(ClientService.class);
-		final FolderMetaData folderMeta = clientService.getFolderMetaData(user, new FileMetaData("507f191e810c19729de860ea", File.separator, false));
+		final FolderMetaData folderMeta = clientService.getFolderMetaData(user, FileMetaData.folder("507f191e810c19729de860ea", File.separator, false));
 		final FileMetaData rootMeta = folderMeta.getMetaData();
 		Assertions.assertThat(rootMeta.getProjectId()).isEqualTo("507f191e810c19729de860ea");
 		Assertions.assertThat(rootMeta.getHash()).isNull();
@@ -29,7 +29,7 @@ public class GetFolderMetaDataITest {
 	public void testFolderNotPresent() {
 		final Daemon deamon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
 		final ClientService clientService = deamon.service(ClientService.class);
-		final FolderMetaData metadata = clientService.getFolderMetaData(user, new FileMetaData("507f191e810c19729de860ea", "/NOT PRESENT", false));
+		final FolderMetaData metadata = clientService.getFolderMetaData(user, FileMetaData.folder("507f191e810c19729de860ea", "/NOT PRESENT", false));
 		Assertions.assertThat(metadata).isNull();
 	}
 }
