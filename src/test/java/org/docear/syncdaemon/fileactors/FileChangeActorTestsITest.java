@@ -7,7 +7,6 @@ import org.apache.commons.io.FileUtils;
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.TestUtils;
 import org.docear.syncdaemon.client.ClientService;
-import org.docear.syncdaemon.client.UploadFileITest;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.hashing.HashAlgorithm;
 import org.docear.syncdaemon.hashing.SHA2;
@@ -21,56 +20,67 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- *
  * At the moment windows specific
  * will be changed very soon :) (Julius)
  */
 public class FileChangeActorTestsITest {
 
+    private final static HashAlgorithm hashAlgorithm = new SHA2();
+    private final static User user = new User("Julius", "Julius-token");
+    private final static String projectId = "507f191e810c19729de860ea";
+    private final static String rootPath = "D:\\p1";
+    private final static String filePath = "/new.mm";
+    private final static Project project = new Project(projectId, rootPath, 0L);
+    private final static FileMetaData fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
+    private final static File fileOnFS = new File("D:\\p1\\new.mm");
     private static ActorSystem actorSystem;
     private static Daemon daemon;
     private static ActorRef fileChangeActor;
     private static ClientService clientService;
     private static IndexDbService indexDbService;
-
-    private final static HashAlgorithm hashAlgorithm = new SHA2();
-    private final static User user = new User("Julius","Julius-token");
-    private final static String projectId = "507f191e810c19729de860ea";
-    private final static String rootPath = "D:\\p1";
-    private final static String filePath = "/new.mm";
-    private final static Project project = new Project(projectId,rootPath,0L);
-    private final static FileMetaData fileMetaData = FileMetaData.file(filePath,"",projectId, false, 0L);
-    private final static File fileOnFS = new File("D:\\p1\\new.mm");
+    private static File testFile;
+    private static String testFileHash;
 
     @BeforeClass
-    public static void beforeClass() {
+    public static void beforeClass() throws IOException {
         actorSystem = ActorSystem.apply();
         daemon = TestUtils.testDaemon();
         daemon.onStart();
         fileChangeActor = daemon.getFileChangeActor();
         clientService = daemon.service(ClientService.class);
         indexDbService = daemon.service(IndexDbService.class);
+
+        //put file locally
+        String pathOfClass = FileChangeActorTestsITest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        testFile = new File(pathOfClass + File.separator + "new.mm");
+        testFileHash = hashAlgorithm.generate(testFile);
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        if (fileOnFS.exists()) {
+            fileOnFS.delete();
+        }
+        Assertions.assertThat(fileOnFS).doesNotExist();
     }
 
     @Before
     public void setUp() {
-        if(fileOnFS.exists()) {
+        if (fileOnFS.exists()) {
             fileOnFS.delete();
         }
         Assertions.assertThat(fileOnFS).doesNotExist();
     }
 
     @After
-    public void tearDown() {
-        if(fileOnFS.exists()) {
-            fileOnFS.delete();
-        }
-        Assertions.assertThat(fileOnFS).doesNotExist();
-    }
+    public void tearDown() throws IOException {
+        //put new.mm on server
+        FileUtils.copyFile(testFile, fileOnFS);
+        final FileMetaData newMeta = FileMetaData.file(filePath, testFileHash, projectId, false, getCurrentRevisionOnServerOfTestfile());
+        clientService.upload(user, project, fileMetaData);
 
-    @AfterClass
-    public static void afterClass() {
-        if(fileOnFS.exists()) {
+        //delete locally
+        if (fileOnFS.exists()) {
             fileOnFS.delete();
         }
         Assertions.assertThat(fileOnFS).doesNotExist();
@@ -79,7 +89,7 @@ public class FileChangeActorTestsITest {
     @Test
     public void testNewFileOnServer() {
         new JavaTestKit(actorSystem) {{
-            fileChangeActor.tell(new Messages.FileChangedOnServer(project,fileMetaData),getRef());
+            fileChangeActor.tell(new Messages.FileChangedOnServer(project, fileMetaData), getRef());
             expectNoMsg();
         }};
         Assertions.assertThat(fileOnFS).exists();
@@ -87,20 +97,18 @@ public class FileChangeActorTestsITest {
 
     @Test
     public void testFileDeletedOnServer() throws IOException {
-        //put file locally
-        String pathOfClass = UploadFileITest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        final File testFile = new File(pathOfClass + File.separator + "new.mm");
+
         FileUtils.copyFile(testFile, fileOnFS);
 
         final String hash = hashAlgorithm.generate(fileOnFS);
 
         //put entry in db
-        indexDbService.save(FileMetaData.file(filePath,hash,projectId,true,getCurrentRevisionOnServerOfTestfile()));
+        indexDbService.save(FileMetaData.file(filePath, hash, projectId, true, getCurrentRevisionOnServerOfTestfile()));
 
         //delete
-        final FileMetaData deletedServerMeta = FileMetaData.file(filePath,"",projectId,true,getCurrentRevisionOnServerOfTestfile()+1);
+        final FileMetaData deletedServerMeta = FileMetaData.file(filePath, "", projectId, true, getCurrentRevisionOnServerOfTestfile() + 1);
         new JavaTestKit(actorSystem) {{
-            fileChangeActor.tell(new Messages.FileChangedOnServer(project,deletedServerMeta),getRef());
+            fileChangeActor.tell(new Messages.FileChangedOnServer(project, deletedServerMeta), getRef());
             expectNoMsg();
         }};
 
@@ -108,8 +116,22 @@ public class FileChangeActorTestsITest {
     }
 
     @Test
-    public void testFileUpdatedOnServer() {
+    public void testFileUpdatedOnServer() throws IOException {
+        final String oldContent = "This is a file";
+        //prepare
+        FileUtils.write(fileOnFS, oldContent);
 
+        final String fileHash = hashAlgorithm.generate(fileOnFS);
+        final Long currentRev = getCurrentRevisionOnServerOfTestfile();
+        indexDbService.save(FileMetaData.file(filePath, fileHash, projectId, false, currentRev - 1));
+
+        final FileMetaData newMeta = FileMetaData.file(filePath, testFileHash, projectId, false, currentRev);
+        new JavaTestKit(actorSystem) {{
+            fileChangeActor.tell(new Messages.FileChangedOnServer(project, newMeta), getRef());
+            expectNoMsg();
+        }};
+
+        Assertions.assertThat(fileOnFS).hasSameContentAs(testFile);
     }
 
     @Test
@@ -123,6 +145,6 @@ public class FileChangeActorTestsITest {
     }
 
     private Long getCurrentRevisionOnServerOfTestfile() {
-        return clientService.getCurrentFileMetaData(user,fileMetaData).getRevision();
+        return clientService.getCurrentFileMetaData(user, fileMetaData).getRevision();
     }
 }
