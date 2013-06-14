@@ -80,18 +80,22 @@ public class FileChangeActor extends UntypedActor {
                 //check if indexDB is different than server
                 if (fileFileMetaDataDB.getRevision() != fileMetaDataServer.getRevision()) {
                     //YES
-                    //download and put file
-                    downloadAndPutFile(project,fileMetaDataServer);
-                    //put metadata
-                    indexDbService.save(fileMetaDataServer);
+                    //check if file shall be deleted or upserted
+                    if (fileMetaDataServer.isDeleted()) {
+                        //deleted
+                        deleteFile(project,fileMetaDataFS);
+                    } else {
+                        //upserted
+                        downloadAndPutFile(project, fileMetaDataServer);
+                        //put metadata
+                        indexDbService.save(fileMetaDataServer);
+                    }
                 }
             }
-        }  else if (message instanceof User) {
+        } else if (message instanceof User) {
             this.user = (User) message;
         }
     }
-
-    //private void FsDifferentToDB(Project project, )
 
     private FileMetaData getFSMetadata(Project project, FileMetaData fileMetaData) throws IOException {
         final String path = project.getRootPath() + File.separator + fileMetaData.getPath();
@@ -101,26 +105,39 @@ public class FileChangeActor extends UntypedActor {
         return new FileMetaData(fileMetaData.getPath(), hash, project.getId(), fileMetaData.isFolder(), fileMetaData.isDeleted(), fileMetaData.getRevision());
     }
 
+    private void deleteFile(Project project, FileMetaData fileMetaData) throws IOException {
+        final File file = getFile(project, fileMetaData);
+        if (file.exists() && !file.delete()) {
+            throw new IOException("could not delete file");
+        }
+    }
+
     private void downloadAndPutFile(Project project, FileMetaData fileMetaData) throws IOException {
         InputStream in = null;
         OutputStream out = null;
         try {
-            final String path = project.getRootPath() + File.separator + fileMetaData.getPath();
-            final File file = new File(path);
-            if (file.exists() && !file.delete()) {
-                //problem deleting file. May be locked
-                //scheduling a retry in 30 seconds
-                final ActorSystem system = getContext().system();
-                system.scheduler().scheduleOnce(Duration.apply(30, TimeUnit.SECONDS), getSelf(), new Messages.FileChangedOnServer(project, fileMetaData), system.dispatcher());
-                throw new IOException("Could not delete file. It may be locked. Rescheduled event in 30 seconds.");
-            }
+            deleteFile(project,fileMetaData);
+
+            final File file = getFile(project, fileMetaData);
 
             in = clientService.download(user, fileMetaData);
             out = new FileOutputStream(file);
 
             IOUtils.copy(in, out);
+        } catch (IOException e) {
+            //problem deleting file. May be locked
+            //scheduling a retry in 30 seconds
+            final ActorSystem system = getContext().system();
+            system.scheduler().scheduleOnce(Duration.apply(30, TimeUnit.SECONDS), getSelf(), new Messages.FileChangedOnServer(project, fileMetaData), system.dispatcher());
+            throw new IOException("Could not delete file. It may be locked. Rescheduled event in 30 seconds.");
         } finally {
             IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(out);
         }
+    }
+
+    private File getFile(Project project, FileMetaData fileMetaData) {
+        final String path = project.getRootPath() + File.separator + fileMetaData.getPath();
+        return new File(path);
     }
 }
