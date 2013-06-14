@@ -45,10 +45,10 @@ public class FileIndexServiceImpl extends UntypedActor implements
                 for (FileMetaData fmdFromScan : files) {
                     final FileMetaData fmdFromIndexDb = indexDbService.getFileMetaData(fmdFromScan);
                     if (fmdFromScan.isChanged(fmdFromIndexDb)) {
-                        // TODO is this case relevant?
-                    	//sendConflictMesage(fmdFromScan);
+                    	sendFileChangedMessage(fmdFromScan);
                     } else {
-                        sendFileChangedMessage(fmdFromScan);
+                    	// TODO is this case relevant?
+                    	//sendConflictMesage(fmdFromScan);
                     }
                 }
             }
