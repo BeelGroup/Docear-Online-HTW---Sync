@@ -1,24 +1,18 @@
 package org.docear.syncdaemon;
 
 
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-
-import java.lang.reflect.Constructor;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
+import java.lang.reflect.Constructor;
+import java.util.*;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class Daemon {
     private static final Logger logger = LoggerFactory.getLogger(Daemon.class);
@@ -30,6 +24,7 @@ public class Daemon {
     private ActorSystem actorSystem;
 
     private ActorRef fileChangeActor;
+    private ActorRef listenForUpdatesActor;
 
     public Daemon() {
         this(ConfigFactory.load());
