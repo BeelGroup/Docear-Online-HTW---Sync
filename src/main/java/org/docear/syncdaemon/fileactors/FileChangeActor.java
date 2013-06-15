@@ -37,96 +37,9 @@ public class FileChangeActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof Messages.FileChangedLocally) {
-            final Messages.FileChangedLocally fileChangedLocally = (Messages.FileChangedLocally) message;
-            final Project project = fileChangedLocally.getProject();
-            final FileMetaData fileMetaDataFS = fileChangedLocally.getFileMetaDataLocally();
-
-
-            //validate not null and hash
-            if (fileMetaDataFS == null) {
-                throw new NullPointerException("fileMetaDataFS cannot be null");
-            }
-            //something is present at location
-            else {
-                final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
-                //check if folder
-                if (fileMetaDataFS.isFolder()) {
-                    //check that indexDB does not know a folder
-                    if(!fileMetaDataDB.isFolder()) {
-                        //upload the folder
-                        clientService.upload(user,project,fileMetaDataDB);
-                    }
-                }
-                if (!fileMetaDataFS.isDeleted() && !fileMetaDataFS.isFolder() && !hashAlgorithm.isValidHash(fileMetaDataFS.getHash())) {
-                    throw new IllegalArgumentException("No valid hash for FS file");
-                }
-
-
-                //final FileMetaData fileMetaDataServer = clientService.getCurrentFileMetaData(user, fileMetaDataFS);
-
-                //1a. look if locally new file
-                if (fileMetaDataDB == null || fileMetaDataDB.isDeleted()) {
-                    final UploadResponse uploadResponse = clientService.upload(user, project, fileMetaDataFS);
-                    //Conflict?
-                    if (uploadResponse.hasConflicts()) {
-                        //download real file, conflicted will be triggered by update listener
-                        downloadAndPutFile(project, uploadResponse.getCurrentServerMetaData());
-                    } else {
-                        indexDbService.save(uploadResponse.getCurrentServerMetaData());
-                    }
-                }
-                //1b. is locally deleted
-                else if ((fileMetaDataFS.isDeleted() && !fileMetaDataDB.isDeleted())) {
-                    clientService.delete(user, project, fileMetaDataDB);
-                }
-                //1c. is locally updated file
-                else if (!fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())) {// locally changed)
-                    //1b.1 push new file to db
-                    final UploadResponse uploadResponse = clientService.upload(user, project, fileMetaDataFS);
-                    //check for conflicts
-                    if (uploadResponse.hasConflicts()) {
-                        //download correct file, conflicted will be triggered by update listener
-                        downloadAndPutFile(project, uploadResponse.getCurrentServerMetaData());
-                    }
-                }
-            }
+            fileChangedLocally((Messages.FileChangedLocally) message);
         } else if (message instanceof Messages.FileChangedOnServer) {
-
-            final Messages.FileChangedOnServer fileChangedOnServer = (Messages.FileChangedOnServer) message;
-            final Project project = fileChangedOnServer.getProject();
-            final FileMetaData fileMetaDataServer = fileChangedOnServer.getFileMetaDataOnServer();
-
-            final FileMetaData fileFileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataServer);
-            final FileMetaData fileMetaDataFS = getFSMetadata(project, fileMetaDataServer);
-
-            // check if file is NOT locally present
-            if (fileMetaDataFS == null && fileFileMetaDataDB == null) {
-                downloadAndPutFile(project, fileMetaDataServer);
-            }
-            // check if file is as said in DB
-            else if ((fileMetaDataFS == null && fileFileMetaDataDB.isDeleted()) ||
-                    fileMetaDataFS.getHash().equals(fileFileMetaDataDB.getHash())) {
-                //YES
-                //check if indexDB is different than server
-                if (fileFileMetaDataDB.getRevision() != fileMetaDataServer.getRevision()) {
-                    //YES
-                    //check if file shall be deleted or upserted
-                    if (fileMetaDataServer.isDeleted()) {
-                        //deleted
-                        deleteFile(project, fileMetaDataFS);
-                    } else {
-                        //upserted
-                        //check if folder or file
-                        if (fileMetaDataServer.isFolder()) {
-                            getFile(project, fileMetaDataServer).mkdir();
-                        } else {
-                            downloadAndPutFile(project, fileMetaDataServer);
-                        }
-                        //put metadata
-                        indexDbService.save(fileMetaDataServer);
-                    }
-                }
-            }
+            fileChangedOnServer((Messages.FileChangedOnServer) message);
         } else if (message instanceof User) {
             this.user = (User) message;
         } else if (message instanceof Messages.ProjectDeleted) {
@@ -143,6 +56,98 @@ public class FileChangeActor extends UntypedActor {
             FileUtils.forceMkdir(new File(projectAdded.getProject().getRootPath()));
 
             indexDbService.addProject(projectAdded.getProject().getId(), projectAdded.getProject().getRootPath());
+        }
+    }
+
+    private void fileChangedLocally(Messages.FileChangedLocally fileChangedLocally) throws IOException {
+        final Project project = fileChangedLocally.getProject();
+        final FileMetaData fileMetaDataFS = fileChangedLocally.getFileMetaDataLocally();
+
+
+        //validate not null and hash
+        if (fileMetaDataFS == null) {
+            throw new NullPointerException("fileMetaDataFS cannot be null");
+        }
+        //something is present at location
+        else {
+            final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
+
+            //check if deleted (independent from file/folder
+            if ((fileMetaDataFS.isDeleted() && !fileMetaDataDB.isDeleted())) {
+                final FileMetaData fileMetaDataServer = clientService.delete(user, project, fileMetaDataDB);
+                indexDbService.save(fileMetaDataServer);
+            }
+            //check if folder
+            else if (fileMetaDataFS.isFolder()) {
+                //check that indexDB does not know a folder
+                if (fileMetaDataDB == null || !fileMetaDataDB.isFolder() || fileMetaDataDB.isDeleted()) {
+                    //upload the folder
+                    final FileMetaData fileMetaDataServer = clientService.createFolder(user, project, fileMetaDataFS);
+                    indexDbService.save(fileMetaDataServer);
+                }
+            }
+            //is existing file
+            else {
+                if (!hashAlgorithm.isValidHash(fileMetaDataFS.getHash())) {
+                    throw new IllegalArgumentException("No valid hash for FS file");
+                }
+
+                UploadResponse uploadResponse = null;
+                //look if locally new file
+                if (fileMetaDataDB == null || fileMetaDataDB.isDeleted()) {
+                    //revision doesn't matter, because file is not present online (assumption)
+                    uploadResponse = clientService.upload(user, project, fileMetaDataFS);
+                }
+                //is locally updated file
+                else if (!fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())) {
+                    //create meta data with correct revision
+                    final FileMetaData correctMetaData = FileMetaData.file(fileMetaDataFS.getPath(), fileMetaDataFS.getHash(), project.getId(), false, fileMetaDataDB.getRevision());
+                    //send request
+                    uploadResponse = clientService.upload(user, project, correctMetaData);
+                }
+
+                if (uploadResponse != null) {
+                    //Conflict?
+                    if (uploadResponse.hasConflicts()) {
+                        //download real file, conflicted will be triggered by update listener
+                        downloadAndPutFile(project, uploadResponse.getCurrentServerMetaData());
+                    }
+                    //save in index db
+                    indexDbService.save(uploadResponse.getCurrentServerMetaData());
+                }
+            }
+        }
+    }
+
+    private void fileChangedOnServer(Messages.FileChangedOnServer fileChangedOnServer) throws IOException {
+        final Project project = fileChangedOnServer.getProject();
+        final FileMetaData fileMetaDataServer = fileChangedOnServer.getFileMetaDataOnServer();
+        final File file = getFile(project, fileMetaDataServer);
+
+        final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataServer);
+        //final FileMetaData fileMetaDataFS = getFSMetadata(project, fileMetaDataServer);
+
+        // check if server revision is already known
+        if(fileMetaDataDB != null && fileMetaDataDB.getRevision() == fileMetaDataServer.getRevision()) {
+            // nothing to do;
+            return;
+        }
+        // check if file/folder has been deleted
+        else if(fileMetaDataServer.isDeleted()) {
+            file.delete();
+            indexDbService.save(fileMetaDataServer);
+        }
+        // check if new file is a folder
+        else if(fileMetaDataServer.isFolder()) {
+            if(file.exists())
+                file.delete();
+            file.mkdirs();
+            indexDbService.save(fileMetaDataServer);
+        }
+        // is an on the server existing file
+        else {
+            downloadAndPutFile(project,fileMetaDataServer);
+            indexDbService.save(fileMetaDataServer);
         }
     }
 

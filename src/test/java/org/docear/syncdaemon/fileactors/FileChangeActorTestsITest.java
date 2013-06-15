@@ -11,6 +11,7 @@ import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.hashing.HashAlgorithm;
 import org.docear.syncdaemon.hashing.SHA2;
 import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.indexdb.PersistenceException;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.fest.assertions.Assertions;
@@ -78,7 +79,9 @@ public class FileChangeActorTestsITest {
     }
 
     @Test
-    public void testNewFileOnServer() {
+    public void testNewFileOnServer() throws PersistenceException {
+        indexDbService.save(FileMetaData.file(filePath, testFileHash, projectId, true, getCurrentRevisionOnServerOfTestFile()));
+
         new JavaTestKit(actorSystem) {{
             fileChangeActor.tell(new Messages.FileChangedOnServer(project, fileMetaData), getRef());
             expectNoMsg();
@@ -128,9 +131,10 @@ public class FileChangeActorTestsITest {
     @Test
     public void testFileUpdatedOnServerToFolder() throws IOException {
         final Long revision = getCurrentRevisionOnServerOfTestFile();
-        //clientService.delete(user,project,FileMetaData.file(filePath,testFileHash,projectId,true,revision));
+
         final FileMetaData newMeta = FileMetaData.file(filePath, "", projectId, true, revision);
         indexDbService.save(newMeta);
+
         final FileMetaData folderMeta = FileMetaData.folder(projectId, filePath, false, revision + 1);
         new JavaTestKit(actorSystem) {{
             fileChangeActor.tell(new Messages.FileChangedOnServer(project, folderMeta), getRef());
@@ -197,13 +201,14 @@ public class FileChangeActorTestsITest {
 
     @Test
     public void testFileUpdatedLocallyToFolder() throws IOException {
-        final Long revision = getCurrentRevisionOnServerOfTestFile();
-
         //first need to delete (file can't change to folder directly)
         deleteTestFile();
-        clientService.delete(user,project,fileMetaData);
+        final FileMetaData serverMeta = clientService.delete(user,project,fileMetaData);
+        indexDbService.save(serverMeta);
 
-        final FileMetaData newMeta = FileMetaData.folder(projectId,filePath,false,revision+1);
+        fileOnFS.mkdir();
+
+        final FileMetaData newMeta = FileMetaData.folder(projectId,filePath,false,serverMeta.getRevision());
         new JavaTestKit(actorSystem) {{
             fileChangeActor.tell(new Messages.FileChangedLocally(project, newMeta), getRef());
             expectNoMsg();
