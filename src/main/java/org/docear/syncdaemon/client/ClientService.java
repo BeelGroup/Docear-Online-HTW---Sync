@@ -15,6 +15,8 @@ public interface ClientService {
      */
     UploadResponse upload(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException;
 
+    FileMetaData createFolder(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException;
+
     /**
      * @param user
      * @param project

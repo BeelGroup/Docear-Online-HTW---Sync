@@ -102,11 +102,39 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
                     return new UploadResponse(currentOriMetaData, newFileMeta);
                 }
             } else {
-                throw new RuntimeException("Problem uploading file! HTTP Code: "+response.getStatus());
+                throw new RuntimeException("Problem uploading file! HTTP Code: " + response.getStatus());
             }
 
         } finally {
             IOUtils.closeQuietly(fileStream);
+        }
+    }
+
+    @Override
+    public FileMetaData createFolder(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException {
+        final String projectId = fileMetaData.getProjectId();
+        // validation
+        if (!project.getId().equals(projectId)) {
+            throw new IllegalStateException("file does not belong to project");
+        }
+
+        final String absoluteFilePath = project.getRootPath() + fileMetaData.getPath();
+        final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
+        final File file = new File(absoluteFilePath);
+
+        if (file.isDirectory()) {
+            final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("create_folder");
+            final MultivaluedMapImpl map = new MultivaluedMapImpl();
+            map.add("path", urlEncodedFilePath);
+
+            final ClientResponse response = request.post(ClientResponse.class, map);
+            if (response.getStatus() == 200) {
+                return serverMetadataToLocalFileMetaData(projectId, response.getEntity(String.class));
+            } else {
+                throw new RuntimeException("Problem uploading file! HTTP Code: " + response.getStatus());
+            }
+        } else {
+            throw new IllegalStateException("Resource is not a directory!");
         }
     }
 
