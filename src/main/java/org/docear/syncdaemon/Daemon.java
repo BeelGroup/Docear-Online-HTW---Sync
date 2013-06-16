@@ -1,20 +1,29 @@
 package org.docear.syncdaemon;
 
-import akka.actor.*;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import java.lang.reflect.Constructor;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.fileactors.FileChangeActor;
-import org.docear.syncdaemon.fileactors.Messages;
-import org.docear.syncdaemon.fileindex.FileMetaData;
+import org.docear.syncdaemon.fileactors.ListenForUpdatesActor;
 import org.docear.syncdaemon.indexdb.IndexDbService;
-import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-import java.util.*;
+import akka.actor.Actor;
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
+import akka.actor.UntypedActor;
+import akka.actor.UntypedActorFactory;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -71,7 +80,12 @@ public class Daemon {
             }
         }), "fileChangeActor");
 
-
+        listenForUpdatesActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
+            @Override
+            public Actor create() throws Exception {
+                return (UntypedActor) new ListenForUpdatesActor(getUser(), service(ClientService.class), getFileChangeActor(), service(IndexDbService.class));
+            }
+        }), "listenForUpdatesActor");
     }
 
 
@@ -159,6 +173,14 @@ public class Daemon {
     public ActorRef getFileChangeActor() {
         return fileChangeActor;
     }
+    
+    public void setListenForUpdatesActor(ActorRef listenForUpdatesActor) {
+		this.listenForUpdatesActor = listenForUpdatesActor;
+	}
+    
+    public ActorRef getListenForUpdatesActor() {
+		return listenForUpdatesActor;
+	}
 
     public void setFileChangeActor(ActorRef fileChangeActor) {
         this.fileChangeActor = fileChangeActor;
