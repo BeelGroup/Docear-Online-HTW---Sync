@@ -4,14 +4,10 @@ import java.util.List;
 
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.Plugin;
-import org.docear.syncdaemon.client.ClientService;
-import org.docear.syncdaemon.client.ClientServiceImpl;
-import org.docear.syncdaemon.fileactors.FileChangeActor;
-import org.docear.syncdaemon.indexdb.IndexDbService;
-import org.docear.syncdaemon.indexdb.h2.H2IndexDbService;
-import org.docear.syncdaemon.projects.LocalProjectService;
+import org.docear.syncdaemon.config.ConfigService;
 import org.docear.syncdaemon.projects.Project;
-import org.docear.syncdaemon.users.User;
+
+import akka.actor.ActorRef;
 
 public class FileIndexPlugin extends Plugin{
 
@@ -21,15 +17,12 @@ public class FileIndexPlugin extends Plugin{
 
 	@Override
 	public void onStart() {
-        final LocalProjectService projectService = daemon().service(LocalProjectService.class);
-        final ClientService clientService = daemon().service(ClientServiceImpl.class);
-        final IndexDbService indexDbService = daemon().service(H2IndexDbService.class);
-        final List<Project> projects = projectService.getProjects();
-        final FileIndexServiceFactory factory = daemon().service(FileIndexServiceFactoryImpl.class);
-        final User user = daemon().getUser();
-        final FileChangeActor fileChangeActor = new FileChangeActor(clientService, indexDbService, user);
+        final ConfigService configService = daemon().service(ConfigService.class);
+        final List<Project> projects = configService.getProjects();
+        final FileIndexServiceFactory factory = daemon().service(FileIndexServiceFactory.class);
+        final ActorRef fileChangeActor = daemon().getFileChangeActor();
         for (final Project project : projects) {
-            factory.create(project, fileChangeActor.getSelf());
+            factory.create(project, fileChangeActor);
         }
     }
 

@@ -10,6 +10,12 @@ public class Project {
     // rootPath is normalized to current system. there is no end separator
     final String rootPath;
     final long revision;
+    
+    public Project(){
+    	id = null;
+    	rootPath = null;
+    	revision = 0L;
+    }
 
     public Project(String id, String rootPath, long revision) {
         this.id = id;

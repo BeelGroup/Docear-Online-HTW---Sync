@@ -90,6 +90,7 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 				String xml = xmlMapper.writeValueAsString(projects);
 				FileUtils.writeStringToFile(configFile, xml);
 			} else {
+				logger.debug("No project to save.");
 				if (configFile.exists())
 					FileUtils.forceDelete(configFile);
 			}
