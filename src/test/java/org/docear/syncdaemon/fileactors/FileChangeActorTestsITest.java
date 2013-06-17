@@ -29,7 +29,7 @@ public class FileChangeActorTestsITest {
     private final static HashAlgorithm hashAlgorithm = new SHA2();
     private final static User user = new User("Julius", "Julius-token");
     private final static String projectId = "507f191e810c19729de860ea";
-    private final static String rootPath = "D:\\p1";
+    private final static String rootPath = System.getProperty("user.home")+File.separator+"docear"+File.separator+"testProject";
     private final static String filePath = "/new.mm";
     private final static Project project = new Project(projectId, rootPath, 0L);
     private final static FileMetaData fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
