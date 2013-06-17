@@ -25,6 +25,7 @@
 * started with `sbt run` the default configuration is application.conf
 * started with `sbt -Dconfig.file=developername.conf run` the used configuration is developername.conf
 * started with `java -jar <artefact-name>` the used configuration is prod.conf
+* change docear home folder: `daemon.docear.home=/tmp/my/docear/home`
 
 ### Dependency Injection
 * using application.conf or similar files
