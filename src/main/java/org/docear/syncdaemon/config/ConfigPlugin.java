@@ -9,5 +9,14 @@ public class ConfigPlugin extends Plugin{
 		super(daemon);
 	}
 
+	@Override
+	public void onStart() {
+	
+	}
+
+	@Override
+	public void onStop() {
+		
+	}
 	
 }
