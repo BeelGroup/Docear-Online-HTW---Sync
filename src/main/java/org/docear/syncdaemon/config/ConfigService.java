@@ -10,4 +10,5 @@ public interface ConfigService {
 	void addProject(Project project);
 	void deleteProject(Project project);
 	String getProjectRootPath(String projectId);
+	void saveConfig();
 }

@@ -1,9 +1,10 @@
 package org.docear.syncdaemon.projects;
 
-import java.io.File;
-
 import org.apache.commons.io.FilenameUtils;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
+@JacksonXmlRootElement(localName="project")
 public class Project {
     final String id;
     // rootPath is normalized to current system. there is no end separator

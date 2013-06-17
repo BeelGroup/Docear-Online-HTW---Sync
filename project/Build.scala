@@ -29,6 +29,7 @@ object Build extends Build {
       , "com.sun.jersey" % "jersey-core" % jerseyVersion
       , "com.sun.jersey" % "jersey-client" % jerseyVersion
       , "com.sun.jersey.contribs" % "jersey-apache-client" % jerseyVersion
+      , "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % "2.2.2"
       , "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion
       , "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion
       , "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion
