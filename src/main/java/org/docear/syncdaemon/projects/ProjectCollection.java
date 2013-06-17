@@ -25,12 +25,17 @@ public class ProjectCollection {
 	}
 
 	public void deleteProject(Project project) {
-		projectList.remove(project);
-		projectRootPaths.remove(project.getId());	
+		if (projectList.contains(project))
+			projectList.remove(project);
+		if (projectRootPaths.containsKey(project.getId()))
+			projectRootPaths.remove(project.getId());	
 	}
 
 	public String getProjectRootPath(String projectId) {
-		return projectRootPaths.get(projectId);
+		if (projectRootPaths.containsKey(projectId)){
+			return projectRootPaths.get(projectId);
+		}
+		return null;
 	}
 
 }

@@ -1,6 +1,7 @@
 package org.docear.syncdaemon.config;
 
 import org.docear.syncdaemon.Daemon;
+import org.docear.syncdaemon.projects.Project;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,5 +34,22 @@ public class ConfigServiceImplTest {
         assertThat(service.getSyncDaemonHome()).exists();
         assertThat(service.getSyncDaemonHome()).isDirectory();
         assertThat(service.getSyncDaemonHome().getAbsolutePath()).overridingErrorMessage("in test daemon home is in the tmp folder").contains(getTempDirectoryPath());
+    }
+    
+    @Test
+    public void addProject() throws Exception {
+    	Project project = new Project("thisIsAId", "/root/Path", 8L);
+    	service.addProject(project);
+    	assertThat(service.getProjects().size()).isEqualTo(1);
+    	assertThat(service.getProjectRootPath(project.getId())).isEqualTo(project.getRootPath());
+    }
+    
+    @Test
+    public void deleteProject() throws Exception {
+    	Project project = new Project("thisIsAId", "/root/Path", 8L);
+    	service.addProject(project);
+    	service.deleteProject(project);
+    	assertThat(service.getProjects().size()).isEqualTo(0);
+    	assertThat(service.getProjectRootPath(project.getId())).isNull();
     }
 }

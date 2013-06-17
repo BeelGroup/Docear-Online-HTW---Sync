@@ -9,9 +9,7 @@ import java.io.File;
 
 public class ConfigPlugin extends Plugin {
     private static final Logger logger = LoggerFactory.getLogger(ConfigPlugin.class);
-
-	private ConfigService configService;
-	
+    
 	public ConfigPlugin(Daemon daemon) {
 		super(daemon);
 	}
@@ -24,7 +22,7 @@ public class ConfigPlugin extends Plugin {
 
 	@Override
 	public void onStop() {
-		configService = null;
+		
 	}
 	
 }
