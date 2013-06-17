@@ -39,7 +39,7 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
     }
 
     private void init() {
-        final String docearHomePath = defaultString(config.getString("daemon.docear.home"), getUserDirectory() + "/.docear");
+        final String docearHomePath = defaultIfBlank(config.getString("daemon.docear.home"), getUserDirectory() + "/.docear");
         docearHome = new File(docearHomePath);
         syncDaemonHome = new File(docearHome, "projects");
         try {
