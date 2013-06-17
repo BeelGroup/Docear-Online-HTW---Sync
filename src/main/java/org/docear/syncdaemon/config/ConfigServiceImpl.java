@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.apache.commons.io.FileUtils.getUserDirectory;
-import static org.apache.commons.lang3.StringUtils.defaultString;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 
@@ -36,7 +36,7 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
     private void init() {
         projects = new LinkedList<Project>();
 
-        final String docearHomePath = defaultString(config.getString("daemon.docear.home"), getUserDirectory() + "/.docear");
+        final String docearHomePath = defaultIfBlank(config.getString("daemon.docear.home"), getUserDirectory() + "/.docear");
         docearHome = new File(docearHomePath);
         syncDaemonHome = new File(docearHome, "projects");
         try {

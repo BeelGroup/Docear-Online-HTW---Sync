@@ -33,7 +33,7 @@ public class Daemon {
 
     private Config config;
     private List<Plugin> plugins = new LinkedList<Plugin>();
-    private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = new HashMap<Class, Object>();
+    private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = Collections.synchronizedMap(new HashMap<Class, Object>());
 
 
     private User user = new User("Julius","Julius-token");
@@ -118,21 +118,22 @@ public class Daemon {
         return null;
     }
 
-	public <T> T service(Class<T> clazz) {
-        T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
-        if (result == null) {
-            final String implClassName = config.getString("daemon.di." + clazz.getName());
-            if (isNotEmpty(implClassName)) {
-                result = createInstanceWithDefaultConstructor(implClassName);
-                if (result instanceof NeedsConfig) {
-                    final NeedsConfig needsConfig = (NeedsConfig) result;
-                    needsConfig.setConfig(config);
+    public synchronized <T> T service(Class<T> clazz) {
+            T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
+            if (result == null) {
+                final String implClassName = config.getString("daemon.di." + clazz.getName());
+                if (isNotEmpty(implClassName)) {
+                    result = createInstanceWithDefaultConstructor(implClassName);
+                    if (result instanceof NeedsConfig) {
+                        final NeedsConfig needsConfig = (NeedsConfig) result;
+                        needsConfig.setConfig(config);
+                    }
+                    serviceInterfaceToServiceInstanceMap.put(clazz, result);
+                } else {
+                    throw new IllegalStateException("can't find implementation for " + clazz);
                 }
-            } else {
-                throw new IllegalStateException("can't find implementation for " + clazz);
             }
-        }
-        return result;
+            return result;
     }
 
     private <T> T createInstanceWithDefaultConstructor(String implClassName){

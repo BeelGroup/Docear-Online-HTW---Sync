@@ -7,9 +7,17 @@ import org.docear.syncdaemon.indexdb.PersistenceException;
 
 import java.sql.*;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+
 public class H2IndexDbService implements IndexDbService {
 
+    private String connectionUrl;
+
     public H2IndexDbService() {
+    }
+
+    public void setConnectionUrl(String connectionUrl) {
+        this.connectionUrl = connectionUrl;
     }
 
     @Override
@@ -129,7 +137,10 @@ public class H2IndexDbService implements IndexDbService {
 	}
 
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:h2:mem:docearsync", "", "");//TODO as file database in prod, in test in memory
+        if (isEmpty(connectionUrl)) {
+            throw new RuntimeException("connection url for H2 not set");
+        }
+        return DriverManager.getConnection(connectionUrl, "", "");
     }
 
     private static interface WithConnection<T> {
