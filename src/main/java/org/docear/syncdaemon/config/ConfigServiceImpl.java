@@ -1,7 +1,6 @@
 package org.docear.syncdaemon.config;
 
 import static org.apache.commons.io.FileUtils.getUserDirectory;
-import static org.apache.commons.lang3.StringUtils.defaultString;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 import java.io.File;
@@ -39,9 +38,10 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
     }
 
     private void init() {
-        final String docearHomePath = defaultString(config.getString("daemon.docear.home"), getUserDirectory() + "/.docear");
+        final String docearHomePath = defaultIfBlank(config.getString("daemon.docear.home"), getUserDirectory() + "/.docear");
         docearHome = new File(docearHomePath);
         syncDaemonHome = new File(docearHome, "projects");
+        xmlMapper = new XmlMapper();
         try {
 			FileUtils.forceMkdir(syncDaemonHome);
 		
@@ -52,7 +52,7 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 			} else {
 				logger.debug("config file exists.");
 				// TODO fix read error
-				//projects = xmlMapper.readValue(configFile, ProjectCollection.class);
+				projects = xmlMapper.readValue(configFile, ProjectCollection.class);
 			}
 		} catch (IOException e) {
 			logger.error("Error while initialising ConfigServiceImpl.", e);
@@ -69,15 +69,13 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 	@Override
 	public void addProject(Project project) {
 		projects.addProject(project);
-		
-		// TODO save project information to config file in user folder
+		saveConfig();
 	}
 
 	@Override
 	public void deleteProject(Project project) {
 		projects.deleteProject(project);
-	
-		// TODO delete project information to config file in user folder	
+		saveConfig();
 	}
 
 	@Override
@@ -88,8 +86,13 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 	@Override
 	public void saveConfig(){
 		try {
-			String xml = xmlMapper.writeValueAsString(projects);
-			FileUtils.writeStringToFile(configFile, xml);
+			if (projects.getProjects().size() > 0){
+				String xml = xmlMapper.writeValueAsString(projects);
+				FileUtils.writeStringToFile(configFile, xml);
+			} else {
+				if (configFile.exists())
+					FileUtils.forceDelete(configFile);
+			}
 		} catch (JsonProcessingException e) {
 			logger.error("Error while mapping xml.", e);
 		} catch (IOException e) {

@@ -2,13 +2,14 @@ package org.docear.syncdaemon;
 
 import org.junit.Test;
 
+import static org.docear.syncdaemon.TestUtils.testDaemon;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class DaemonPluginApiTest {
 
     @Test
     public void testPluginLifeCycle() throws Exception {
-        final Daemon daemon = new Daemon();
+        final Daemon daemon = testDaemon();
         final DemoPlugin plugin = new DemoPlugin(daemon);
         daemon.addPlugin(plugin);
         assertThat(plugin.onStartCalled).isFalse();
