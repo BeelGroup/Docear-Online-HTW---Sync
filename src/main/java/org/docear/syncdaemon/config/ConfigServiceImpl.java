@@ -2,6 +2,7 @@ package org.docear.syncdaemon.config;
 
 import static org.apache.commons.io.FileUtils.getUserDirectory;
 import static org.apache.commons.lang3.StringUtils.defaultString;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 import java.io.File;
 import java.io.IOException;
