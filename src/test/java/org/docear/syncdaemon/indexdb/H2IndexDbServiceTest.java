@@ -72,15 +72,12 @@ public class H2IndexDbServiceTest {
         assertThat(service.getProjectRevision(projectId)).isEqualTo(revision);
     }
     
-    @Test 
+    @Test(expected = PersistenceException.class)
     public void testAddDeleteProject() throws Exception {
-    	final Project project = new Project("theProjectId", "/root/path", 0);
-    	// add project
-    	service.addProject(project.getId(), project.getRootPath());
-    	assertThat(service.getProjectRootPath(project.getId())).isEqualTo(project.getRootPath());
-    	
-    	// delete project
-    	service.deleteProject(project.getId());
-    	assertThat(service.getProjectRootPath(project.getId())).isNull();
+        final String projectId = "projectId";
+        service.setProjectRevision(projectId, 2);
+        assertThat(service.getProjectRevision(projectId)).isEqualTo(2);
+        service.deleteProject(projectId);
+        assertThat(service.getProjectRevision(projectId)).isEqualTo(0);
     }
 }

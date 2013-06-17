@@ -57,8 +57,8 @@ public class ListenForUpdatesActor extends UntypedActor {
         	if (updatedProjects != null && updatedProjects.size() > 0){
 	        	for (Entry<String, Long> entry : updatedProjects.entrySet()){
 	        		Project localProject = new Project(entry.getKey(),
-	        				indexDbService.getProjectRootPath(entry.getKey()),
-	        				indexDbService.getProjectRevision(entry.getKey()));
+	        				"TODO",
+	        				indexDbService.getProjectRevision(entry.getKey()));//TODO rootpath
 	        		DeltaResponse delta = clientService.delta(user, localProject.getId(), localProject.getRevision());
 	        		List<FileMetaData> fmds = delta.getServerMetaDatas();
 	        		
@@ -101,7 +101,7 @@ public class ListenForUpdatesActor extends UntypedActor {
         	for (String projectId : deletedProjects){
         		logger.debug("Deleted Project: " + projectId);
         		Project localProject = new Project(projectId,
-        				indexDbService.getProjectRootPath(projectId),
+        				"TODO",
         				indexDbService.getProjectRevision(projectId));
         		
         		// tell fileChangeActor that there is a deleted project

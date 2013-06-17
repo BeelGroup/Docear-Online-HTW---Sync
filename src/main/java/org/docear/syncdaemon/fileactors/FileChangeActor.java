@@ -55,7 +55,7 @@ public class FileChangeActor extends UntypedActor {
             // create root dir in FS
             FileUtils.forceMkdir(new File(projectAdded.getProject().getRootPath()));
 
-            indexDbService.addProject(projectAdded.getProject().getId(), projectAdded.getProject().getRootPath());
+            //TODO add project
         }
     }
 
