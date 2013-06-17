@@ -7,11 +7,13 @@ import java.util.Map.Entry;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.DeltaResponse;
 import org.docear.syncdaemon.client.ListenForUpdatesResponse;
+import org.docear.syncdaemon.config.ConfigService;
 import org.docear.syncdaemon.fileactors.Messages.FileChangedOnServer;
 import org.docear.syncdaemon.fileactors.Messages.ProjectAdded;
 import org.docear.syncdaemon.fileactors.Messages.ProjectDeleted;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.indexdb.PersistenceException;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
@@ -25,6 +27,7 @@ public class ListenForUpdatesActor extends UntypedActor {
 
     private User user;
     private ClientService clientService;
+    private final ConfigService configService;
     private IndexDbService indexDbService;
     private ActorRef fileChangeActor;
     
@@ -32,9 +35,10 @@ public class ListenForUpdatesActor extends UntypedActor {
 
     private Map<String, Long> projectIdRevisonMap;
 
-    public ListenForUpdatesActor(User user, ClientService clientService, ActorRef fileChangeActor, IndexDbService indexDb) {
+    public ListenForUpdatesActor(User user, ClientService clientService, ActorRef fileChangeActor, IndexDbService indexDb, ConfigService configService) {
         this.user = user;
         this.clientService = clientService;
+        this.configService = configService;
         this.indexDbService = indexDbService;
         this.fileChangeActor = fileChangeActor;
     }
@@ -56,9 +60,7 @@ public class ListenForUpdatesActor extends UntypedActor {
         	Map<String, Long> updatedProjects = response.getUpdatedProjects();
         	if (updatedProjects != null && updatedProjects.size() > 0){
 	        	for (Entry<String, Long> entry : updatedProjects.entrySet()){
-	        		Project localProject = new Project(entry.getKey(),
-	        				"TODO",
-	        				indexDbService.getProjectRevision(entry.getKey()));//TODO rootpath
+	        		Project localProject = getProject(entry.getKey());//TODO rootpath
 	        		DeltaResponse delta = clientService.delta(user, localProject.getId(), localProject.getRevision());
 	        		List<FileMetaData> fmds = delta.getServerMetaDatas();
 	        		
@@ -100,9 +102,7 @@ public class ListenForUpdatesActor extends UntypedActor {
         	List<String> deletedProjects = response.getDeletedProjects();
         	for (String projectId : deletedProjects){
         		logger.debug("Deleted Project: " + projectId);
-        		Project localProject = new Project(projectId,
-        				"TODO",
-        				indexDbService.getProjectRevision(projectId));
+        		Project localProject = getProject(projectId);
         		
         		// tell fileChangeActor that there is a deleted project
         		fileChangeActor.tell(new ProjectDeleted(localProject), this.getSelf());
@@ -116,5 +116,9 @@ public class ListenForUpdatesActor extends UntypedActor {
         	// listen again
         	this.getSelf().tell(clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf()), this.getSelf());	
         }
+    }
+
+    private Project getProject(String projectId) throws PersistenceException {
+        return new Project(projectId, configService.getProjectRootPath(projectId), indexDbService.getProjectRevision(projectId));
     }
 }

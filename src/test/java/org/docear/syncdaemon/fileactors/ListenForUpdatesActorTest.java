@@ -6,6 +6,7 @@ import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.TestUtils;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.ListenForUpdatesResponse;
+import org.docear.syncdaemon.config.ConfigService;
 
 import org.docear.syncdaemon.fileactors.Messages.FileChangedOnServer;
 import org.docear.syncdaemon.fileactors.Messages.ProjectAdded;
@@ -56,7 +57,6 @@ public class ListenForUpdatesActorTest {
     private final static Project project = new Project(projectId, rootPath, 0L);
     private final static FileMetaData fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
     private final static File fileOnFS = new File("D:\\p1\\new.mm");
-    private static ActorSystem actorSystem;
     private static Daemon daemon;
     private static ActorRef listenForUpdatesActor;
     private static TestActorRef<TestActor> fileChangeActor;
@@ -66,7 +66,7 @@ public class ListenForUpdatesActorTest {
     
     @Before
     public void setUp(){
-    	actorSystem = ActorSystem.create("System"	);
+        ActorSystem actorSystem = ActorSystem.create("System");
     	Props props = Props.apply(TestActor.class);
     	fileChangeActor = TestActorRef.create(actorSystem, props, "testActor");
     	testActor = fileChangeActor.underlyingActor();
@@ -80,7 +80,8 @@ public class ListenForUpdatesActorTest {
         listenForUpdatesActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
-                return (UntypedActor) new ListenForUpdatesActor(user, clientService, fileChangeActor, indexDbService);
+                final ConfigService service = daemon.service(ConfigService.class);
+                return (UntypedActor) new ListenForUpdatesActor(user, clientService, fileChangeActor, indexDbService, service);
             }
         }), "listenForUpdatesActor");
     }
@@ -96,7 +97,7 @@ public class ListenForUpdatesActorTest {
     @Ignore
     public void testNewProject() throws PersistenceException {
         	ListenForUpdatesResponse response = new ListenForUpdatesResponse();
-        	Map<String, Long> newProjects = new HashMap();
+        	Map<String, Long> newProjects = new HashMap<String, Long>();
         	newProjects.put(projectId, 8L);
         	response.setNewProjects(newProjects);
         	
@@ -120,7 +121,7 @@ public class ListenForUpdatesActorTest {
     @Ignore
     public void testDeleteProject() throws PersistenceException {
         	ListenForUpdatesResponse response = new ListenForUpdatesResponse();
-        	List<String> deletedProjects = new LinkedList();
+        	List<String> deletedProjects = new LinkedList<String>();
             final String projectId = "507f191e810c19729de860ea";
             deletedProjects.add(projectId);
         	response.setDeletedProjects(deletedProjects);

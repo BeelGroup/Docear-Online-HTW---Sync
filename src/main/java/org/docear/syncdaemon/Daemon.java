@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.docear.syncdaemon.client.ClientService;
+import org.docear.syncdaemon.config.ConfigService;
 import org.docear.syncdaemon.fileactors.FileChangeActor;
 import org.docear.syncdaemon.fileactors.ListenForUpdatesActor;
 import org.docear.syncdaemon.indexdb.IndexDbService;
@@ -83,7 +84,7 @@ public class Daemon {
         listenForUpdatesActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
-                return (UntypedActor) new ListenForUpdatesActor(getUser(), service(ClientService.class), getFileChangeActor(), service(IndexDbService.class));
+                return (UntypedActor) new ListenForUpdatesActor(getUser(), service(ClientService.class), getFileChangeActor(), service(IndexDbService.class), service(ConfigService.class));
             }
         }), "listenForUpdatesActor");
     }
