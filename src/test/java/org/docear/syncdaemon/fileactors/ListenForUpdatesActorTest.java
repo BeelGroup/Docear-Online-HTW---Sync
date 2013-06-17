@@ -63,7 +63,7 @@ public class ListenForUpdatesActorTest {
     private static IndexDbService indexDbService;
     private static ClientService clientService;
     private static TestActor testActor;
-    
+
     @Before
     public void setUp(){
         ActorSystem actorSystem = ActorSystem.create("System");
@@ -71,12 +71,12 @@ public class ListenForUpdatesActorTest {
     	fileChangeActor = TestActorRef.create(actorSystem, props, "testActor");
     	testActor = fileChangeActor.underlyingActor();
     	testActor.resetCounter();
-        
+
         daemon = TestUtils.testDaemon();
         daemon.onStart();
         clientService = daemon.service(ClientService.class);
         indexDbService = daemon.service(IndexDbService.class);
-        
+
         listenForUpdatesActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
@@ -85,14 +85,14 @@ public class ListenForUpdatesActorTest {
             }
         }), "listenForUpdatesActor");
     }
-    
+
     @After
     public void tearDown() throws Exception {
         daemon.onStop();
         daemon = null;
         indexDbService = null;
     }
-    
+
     @Test
     @Ignore
     public void testNewProject() throws PersistenceException {
@@ -100,7 +100,7 @@ public class ListenForUpdatesActorTest {
         	Map<String, Long> newProjects = new HashMap<String, Long>();
         	newProjects.put(projectId, 8L);
         	response.setNewProjects(newProjects);
-        	
+
         	listenForUpdatesActor.tell(response, fileChangeActor);
 
         	int iterationCnt = 10;
@@ -112,11 +112,11 @@ public class ListenForUpdatesActorTest {
         			Thread.sleep(500);
         		} catch (Exception e){}
         	}
-        	
+
         	assertThat(testActor.getTotalCounter()).isEqualTo(1);
         	assertThat(testActor.getProjectAddedCounter()).isEqualTo(1);
     }
-    
+
     @Test
     @Ignore
     public void testDeleteProject() throws PersistenceException {
@@ -125,7 +125,7 @@ public class ListenForUpdatesActorTest {
             final String projectId = "507f191e810c19729de860ea";
             deletedProjects.add(projectId);
         	response.setDeletedProjects(deletedProjects);
-        	
+
         	indexDbService.save(FileMetaData.file(filePath, "hash", projectId, true, 8));
 
         	//listenForUpdatesActor.tell(response, fileChangeActor);
@@ -139,21 +139,20 @@ public class ListenForUpdatesActorTest {
         			Thread.sleep(500);
         		} catch (Exception e){}
         	}
-        	
+
         	assertThat(testActor.getTotalCounter()).isEqualTo(1);
         	assertThat(testActor.getProjectDeletedCounter()).isEqualTo(1);
     }
 
     private static class TestActor extends UntypedActor{
-    	
+
+    	private static final Logger logger = LoggerFactory.getLogger(TestActor.class);
     	private int fileChangedOnServerCounter = 0;
     	private int projectDeletedCounter = 0;
     	private int projectAddedCounter = 0;
     	private int otherCounter = 0;
     	private int totalCounter = 0;
-    	
-    	private static final Logger logger = LoggerFactory.getLogger(TestActor.class);
-    	
+
     	public void resetCounter(){
     		fileChangedOnServerCounter = 0;
         	projectDeletedCounter = 0;
@@ -161,7 +160,7 @@ public class ListenForUpdatesActorTest {
         	otherCounter = 0;
         	totalCounter = 0;
     	}
-       	
+
     	@Override
     	public void onReceive(Object message) throws Exception {
     		totalCounter++;
@@ -175,11 +174,11 @@ public class ListenForUpdatesActorTest {
     			otherCounter++;
     		}
     	}
-    	
+
     	public int getTotalCounter() {
     		return totalCounter;
 		}
-    	
+
     	public int getProjectAddedCounter() {
 			return projectAddedCounter;
 		}

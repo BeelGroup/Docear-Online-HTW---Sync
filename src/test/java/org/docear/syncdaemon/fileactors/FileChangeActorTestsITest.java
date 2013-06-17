@@ -33,7 +33,7 @@ public class FileChangeActorTestsITest {
     private final static String filePath = "/new.mm";
     private final static Project project = new Project(projectId, rootPath, 0L);
     private final static FileMetaData fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
-    private final static File fileOnFS = new File("D:\\p1\\new.mm");
+    private final static File fileOnFS = new File(rootPath+filePath);
     private static ActorSystem actorSystem;
     private static Daemon daemon;
     private static ActorRef fileChangeActor;
