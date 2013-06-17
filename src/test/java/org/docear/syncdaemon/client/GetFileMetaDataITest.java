@@ -18,7 +18,8 @@ public class GetFileMetaDataITest {
     public void testGetFileMetaData() {
         final Daemon daemon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
         final ClientService clientService = daemon.service(ClientService.class);
-        final FileMetaData metadata = clientService.getCurrentFileMetaData(user, new FileMetaData("507f191e810c19729de860ea", File.separator+"README.md", false));
+        
+        final FileMetaData metadata = clientService.getCurrentFileMetaData(user, FileMetaData.file(File.separator+"README.md", "122233a", "507f191e810c19729de860ea", false, 0));
         assertThat(metadata.getProjectId()).isEqualTo("507f191e810c19729de860ea");
         assertThat(metadata.getHash()).isEqualTo("122233a");
         assertThat(metadata.getPath()).isEqualTo(File.separator+"README.md");
@@ -29,7 +30,7 @@ public class GetFileMetaDataITest {
     public void testFileNotPresent() {
         final Daemon daemon = TestUtils.daemonWithService(ClientService.class, ClientServiceImpl.class);
         final ClientService clientService = daemon.service(ClientService.class);
-        final FileMetaData metadata = clientService.getCurrentFileMetaData(user, new FileMetaData("507f191e810c19729de860ea", File.separator+"NOT PRESENT", false));
+        final FileMetaData metadata = clientService.getCurrentFileMetaData(user, FileMetaData.file(File.separator+"NOT PRESENT", "122233a", "507f191e810c19729de860ea", false, 0));
         assertThat(metadata).isNull();
     }
 }

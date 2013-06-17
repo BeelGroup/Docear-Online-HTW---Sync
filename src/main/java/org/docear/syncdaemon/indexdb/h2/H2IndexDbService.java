@@ -7,9 +7,17 @@ import org.docear.syncdaemon.indexdb.PersistenceException;
 
 import java.sql.*;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+
 public class H2IndexDbService implements IndexDbService {
 
+    private String connectionUrl;
+
     public H2IndexDbService() {
+    }
+
+    public void setConnectionUrl(String connectionUrl) {
+        this.connectionUrl = connectionUrl;
     }
 
     @Override
@@ -34,7 +42,7 @@ public class H2IndexDbService implements IndexDbService {
 
     @Override
     public long getProjectRevision(final String projectId) throws PersistenceException {
-        return execute(new WithQuery<Long>() {
+        final Long revision = execute(new WithQuery<Long>() {
             @Override
             public String sql() {
                 return "SELECT revision FROM " + Table.PROJECTS.getName() + " WHERE id = ?";
@@ -50,6 +58,10 @@ public class H2IndexDbService implements IndexDbService {
                 return resultSet.getLong(1);
             }
         });
+        if (revision == null) {
+            throw new PersistenceException("projekt " + projectId + "not in database");
+        }
+        return revision;
     }
 
     @Override
@@ -94,9 +106,41 @@ public class H2IndexDbService implements IndexDbService {
             }
         });
     }
+    
+    @Override
+	public void deleteProject(final String projectId) throws PersistenceException {
+        // delete project from PROJECTS table
+    	execute(new WithStatement<Object>() {
+            @Override
+            public String sql() {
+            	return "DELETE FROM " + Table.PROJECTS.getName() + " WHERE id = ?";
+            }
+
+            @Override
+            public void statementPreparation(PreparedStatement statement) throws SQLException {
+            	statement.setString(1, projectId);
+            }
+        });
+    	
+        // delete project from FILES table
+    	execute(new WithStatement<Object>() {
+            @Override
+            public String sql() {
+            	return "DELETE FROM " + Table.FILES.getName() + " WHERE projectId = ?";
+            }
+
+            @Override
+            public void statementPreparation(PreparedStatement statement) throws SQLException {
+            	statement.setString(1, projectId);
+            }
+        });
+	}
 
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:h2:mem:docearsync", "", "");//TODO as file database in prod, in test in memory
+        if (isEmpty(connectionUrl)) {
+            throw new RuntimeException("connection url for H2 not set");
+        }
+        return DriverManager.getConnection(connectionUrl, "", "");
     }
 
     private static interface WithConnection<T> {

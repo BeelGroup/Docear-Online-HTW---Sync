@@ -3,6 +3,7 @@ package org.docear.syncdaemon.indexdb.h2;
 import org.apache.commons.dbutils.DbUtils;
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.Plugin;
+import org.docear.syncdaemon.config.ConfigService;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.h2.tools.Server;
 import org.slf4j.Logger;
@@ -29,6 +30,10 @@ public class H2DatabasePlugin extends Plugin {
 
     @Override
     public void onStart() {
+        logger.info("starting H2 plugin");
+        final String indexDbPath = daemon().service(ConfigService.class).getSyncDaemonHome() + "/db/index";
+        final String connectionUrl = "jdbc:h2:" + indexDbPath;
+        getService().setConnectionUrl(connectionUrl);
         loadH2Driver();
         Connection conn = null;
         try {
@@ -46,8 +51,11 @@ public class H2DatabasePlugin extends Plugin {
     }
 
     private Connection getConnection() throws SQLException {
-        final H2IndexDbService service = (H2IndexDbService) daemon().service(IndexDbService.class);
-        return service.getConnection();
+        return getService().getConnection();
+    }
+
+    private H2IndexDbService getService() {
+        return (H2IndexDbService) daemon().service(IndexDbService.class);
     }
 
     private void loadH2Driver() {

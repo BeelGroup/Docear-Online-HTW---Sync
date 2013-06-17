@@ -1,15 +1,16 @@
 package org.docear.syncdaemon.indexdb;
 
-import org.docear.syncdaemon.Daemon;
-import org.docear.syncdaemon.fileindex.FileMetaData;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.docear.syncdaemon.TestUtils.testDaemon;
+import static org.fest.assertions.Assertions.assertThat;
 
 import java.util.UUID;
 
-import static org.docear.syncdaemon.TestUtils.testDaemon;
-import static org.fest.assertions.Assertions.assertThat;
+import org.docear.syncdaemon.Daemon;
+import org.docear.syncdaemon.fileindex.FileMetaData;
+import org.docear.syncdaemon.projects.Project;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class H2IndexDbServiceTest {
     IndexDbService service;
@@ -63,12 +64,20 @@ public class H2IndexDbServiceTest {
         assertThat(storedVersion.isFolder()).isEqualTo(isFolder);
     }
 
-
     @Test
     public void testProjectRevision() throws Exception {
         final String projectId = "earth";
         final long revision = 42L;
         service.setProjectRevision(projectId, revision);
         assertThat(service.getProjectRevision(projectId)).isEqualTo(revision);
+    }
+    
+    @Test(expected = PersistenceException.class)
+    public void testAddDeleteProject() throws Exception {
+        final String projectId = "projectId";
+        service.setProjectRevision(projectId, 2);
+        assertThat(service.getProjectRevision(projectId)).isEqualTo(2);
+        service.deleteProject(projectId);
+        assertThat(service.getProjectRevision(projectId)).isEqualTo(0);
     }
 }

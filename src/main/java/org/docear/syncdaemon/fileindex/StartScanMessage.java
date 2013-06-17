@@ -10,18 +10,18 @@ public class StartScanMessage implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private Project project;
-	private ActorRef serverSynchronisationActor;
+	private ActorRef fileChangeActor;
 	
-	public StartScanMessage(Project project, ActorRef serverSynchronisationActor){
+	public StartScanMessage(Project project, ActorRef fileChangeActor){
 		this.project = project;
-		this.serverSynchronisationActor = serverSynchronisationActor;
+		this.fileChangeActor = fileChangeActor;
 	}
 
 	public Project getProject() {
 		return project;
 	}
 
-	public ActorRef getServerSynchronisationActor() {
-		return serverSynchronisationActor;
+	public ActorRef getFileChangeActor() {
+		return fileChangeActor;
 	}
 }

@@ -15,6 +15,8 @@ public interface ClientService {
      */
     UploadResponse upload(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException;
 
+    FileMetaData createFolder(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException;
+
     /**
      * @param user
      * @param project
@@ -36,6 +38,5 @@ public interface ClientService {
      */
     FileMetaData getCurrentFileMetaData(User user, FileMetaData fileMetaData);
 
-    DeltaResponse delta(User user, Project project);
-    //TODO delta method
+    DeltaResponse delta(User user, String projectId, Long sinceRevision);
 }

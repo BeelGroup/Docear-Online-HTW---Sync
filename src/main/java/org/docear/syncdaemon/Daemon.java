@@ -1,15 +1,30 @@
 package org.docear.syncdaemon;
 
+import java.lang.reflect.Constructor;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import org.docear.syncdaemon.client.ClientService;
+import org.docear.syncdaemon.config.ConfigService;
+import org.docear.syncdaemon.fileactors.FileChangeActor;
+import org.docear.syncdaemon.fileactors.ListenForUpdatesActor;
+import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-import java.util.*;
+import akka.actor.Actor;
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
+import akka.actor.UntypedActor;
+import akka.actor.UntypedActorFactory;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -18,11 +33,14 @@ public class Daemon {
 
     private Config config;
     private List<Plugin> plugins = new LinkedList<Plugin>();
-    private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = new HashMap<Class, Object>();
+    private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = Collections.synchronizedMap(new HashMap<Class, Object>());
 
+
+    private User user = new User("Julius","Julius-token");
     private ActorSystem actorSystem;
 
     private ActorRef fileChangeActor;
+    private ActorRef listenForUpdatesActor;
 
     public Daemon() {
         this(ConfigFactory.load());
@@ -30,6 +48,7 @@ public class Daemon {
 
     public Daemon(Config config) {
         this.config = config;
+        setupActors();
         setupPlugins();
         //TODO instantiate fileChangeActor
     }
@@ -51,6 +70,25 @@ public class Daemon {
             plugins.add(plugin);
         }
     }
+
+    public void setupActors() {
+        actorSystem = ActorSystem.apply();
+
+        fileChangeActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
+            @Override
+            public Actor create() throws Exception {
+                return (UntypedActor) new FileChangeActor(service(ClientService.class), service(IndexDbService.class), getUser());
+            }
+        }), "fileChangeActor");
+
+        listenForUpdatesActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
+            @Override
+            public Actor create() throws Exception {
+                return (UntypedActor) new ListenForUpdatesActor(getUser(), service(ClientService.class), getFileChangeActor(), service(IndexDbService.class), service(ConfigService.class));
+            }
+        }), "listenForUpdatesActor");
+    }
+
 
     private Plugin instantiatePlugin(String className) {
         try {
@@ -80,21 +118,22 @@ public class Daemon {
         return null;
     }
 
-	public <T> T service(Class<T> clazz) {
-        T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
-        if (result == null) {
-            final String implClassName = config.getString("daemon.di." + clazz.getName());
-            if (isNotEmpty(implClassName)) {
-                result = createInstanceWithDefaultConstructor(implClassName);
-                if (result instanceof NeedsConfig) {
-                    final NeedsConfig needsConfig = (NeedsConfig) result;
-                    needsConfig.setConfig(config);
+    public synchronized <T> T service(Class<T> clazz) {
+            T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
+            if (result == null) {
+                final String implClassName = config.getString("daemon.di." + clazz.getName());
+                if (isNotEmpty(implClassName)) {
+                    result = createInstanceWithDefaultConstructor(implClassName);
+                    if (result instanceof NeedsConfig) {
+                        final NeedsConfig needsConfig = (NeedsConfig) result;
+                        needsConfig.setConfig(config);
+                    }
+                    serviceInterfaceToServiceInstanceMap.put(clazz, result);
+                } else {
+                    throw new IllegalStateException("can't find implementation for " + clazz);
                 }
-            } else {
-                throw new IllegalStateException("can't find implementation for " + clazz);
             }
-        }
-        return result;
+            return result;
     }
 
     private <T> T createInstanceWithDefaultConstructor(String implClassName){
@@ -136,6 +175,14 @@ public class Daemon {
     public ActorRef getFileChangeActor() {
         return fileChangeActor;
     }
+    
+    public void setListenForUpdatesActor(ActorRef listenForUpdatesActor) {
+		this.listenForUpdatesActor = listenForUpdatesActor;
+	}
+    
+    public ActorRef getListenForUpdatesActor() {
+		return listenForUpdatesActor;
+	}
 
     public void setFileChangeActor(ActorRef fileChangeActor) {
         this.fileChangeActor = fileChangeActor;
@@ -143,6 +190,10 @@ public class Daemon {
 
     public ActorSystem getActorSystem() {
         return actorSystem;
+    }
+    
+    public User getUser(){
+    	return user;
     }
 
     /* in package scope for testing */

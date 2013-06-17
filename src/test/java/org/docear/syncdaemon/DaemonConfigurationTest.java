@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.docear.syncdaemon.TestUtils.daemonWithService;
+import static org.docear.syncdaemon.TestUtils.testDaemon;
 import static org.docear.syncdaemon.TestUtils.testDaemonWithAdditionalConfiguration;
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -17,8 +18,7 @@ public class DaemonConfigurationTest {
 
     @Test
     public void testGetConfigurationFromClasspath() throws Exception {
-        final Daemon daemon = new Daemon();
-        assertDaemonNameIsCorrect(daemon);
+        final Daemon daemon = testDaemon();
         assertBaseUrl(daemon, "http://localhost:9000/api");
     }
 
@@ -32,13 +32,13 @@ public class DaemonConfigurationTest {
 
     @Test
     public void testFindPluginSettingsInConfigFile() throws Exception {
-        final LoggingPlugin plugin = new Daemon().plugin(LoggingPlugin.class);
+        final LoggingPlugin plugin = testDaemon().plugin(LoggingPlugin.class);
         assertThat(plugin).overridingErrorMessage("logging plugin not found").isNotNull();
     }
 
     @Test
     public void testDependencyInjection() throws Exception {
-        final ClientService service = new Daemon().service(ClientService.class);
+        final ClientService service = testDaemon().service(ClientService.class);
         assertThat(service).isNotNull();
         assertThat(service).isInstanceOf(ClientServiceImpl.class);
     }
@@ -56,7 +56,7 @@ public class DaemonConfigurationTest {
 
     @Test(expected = com.typesafe.config.ConfigException.class)
     public void testDependencyInjectionWithNoConfigKey() throws Exception {
-        new Daemon().service(DaemonConfigurationTest.class);
+        testDaemon().service(DaemonConfigurationTest.class);
     }
 
     private void assertBaseUrl(Daemon daemon, String baseUrl) {

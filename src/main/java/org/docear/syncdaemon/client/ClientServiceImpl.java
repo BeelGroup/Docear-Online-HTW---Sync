@@ -1,6 +1,39 @@
 package org.docear.syncdaemon.client;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipInputStream;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.NullOutputStream;
+import org.docear.syncdaemon.NeedsConfig;
+import org.docear.syncdaemon.client.exceptions.NoFolderException;
+import org.docear.syncdaemon.fileindex.FileMetaData;
+import org.docear.syncdaemon.projects.Project;
+import org.docear.syncdaemon.users.User;
+
 import akka.actor.ActorRef;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,30 +46,6 @@ import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.typesafe.config.Config;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.NullOutputStream;
-import org.docear.syncdaemon.NeedsConfig;
-import org.docear.syncdaemon.client.exceptions.NoFolderException;
-import org.docear.syncdaemon.fileindex.FileMetaData;
-import org.docear.syncdaemon.projects.Project;
-import org.docear.syncdaemon.users.User;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.*;
-import java.net.URLEncoder;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipInputStream;
 
 public class ClientServiceImpl implements ClientService, NeedsConfig {
     private Config config;
@@ -102,11 +111,39 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
                     return new UploadResponse(currentOriMetaData, newFileMeta);
                 }
             } else {
-                throw new RuntimeException("Problem uploading file! HTTP Code: "+response.getStatus());
+                throw new RuntimeException("Problem uploading file! HTTP Code: " + response.getStatus());
             }
 
         } finally {
             IOUtils.closeQuietly(fileStream);
+        }
+    }
+
+    @Override
+    public FileMetaData createFolder(User user, Project project, FileMetaData fileMetaData) throws FileNotFoundException {
+        final String projectId = fileMetaData.getProjectId();
+        // validation
+        if (!project.getId().equals(projectId)) {
+            throw new IllegalStateException("file does not belong to project");
+        }
+
+        final String absoluteFilePath = project.getRootPath() + fileMetaData.getPath();
+        final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
+        final File file = new File(absoluteFilePath);
+
+        if (file.isDirectory()) {
+            final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("create_folder");
+            final MultivaluedMapImpl map = new MultivaluedMapImpl();
+            map.add("path", urlEncodedFilePath);
+
+            final ClientResponse response = request.post(ClientResponse.class, map);
+            if (response.getStatus() == 200) {
+                return serverMetadataToLocalFileMetaData(projectId, response.getEntity(String.class));
+            } else {
+                throw new RuntimeException("Problem uploading file! HTTP Code: " + response.getStatus());
+            }
+        } else {
+            throw new IllegalStateException("Resource is not a directory!");
         }
     }
 
@@ -219,12 +256,11 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     }
 
     @Override
-    public DeltaResponse delta(User user, Project project) {
-        final String projectId = project.getId();
+    public DeltaResponse delta(User user, String projectId, Long sinceRevision) {
 
         final WebResource request = preparedResource(projectId, user).path("delta");
         final MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-        formData.add("projectRevision", project.getRevision() + "");
+        formData.add("projectRevision", sinceRevision + "");
 
         final ClientResponse response = request.post(ClientResponse.class, formData);
 

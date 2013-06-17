@@ -23,4 +23,6 @@ public interface IndexDbService {
      * @param fileMetaData file metadata of requested file
      */
     public FileMetaData getFileMetaData(FileMetaData fileMetaData) throws PersistenceException;
+    
+    public void deleteProject(String projectId) throws PersistenceException;
 }

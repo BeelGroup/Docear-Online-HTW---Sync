@@ -14,6 +14,7 @@ object Build extends Build {
     Seq(
       "net.contentobjects.jnotify" % "jnotify" % "0.94" //watches changes of files, uses native libraries
       , "com.typesafe.akka" % "akka-actor_2.10" % "2.1.2" //event-driven programming with messages and actors
+      , "com.typesafe.akka" % "akka-testkit_2.10" % "2.1.2" //akka testing
       , "joda-time" % "joda-time" % "2.2" //library for timing
       , "com.google.guava" % "guava" % "14.0.1" //functional programming and utils for collections
       , "org.apache.commons" % "commons-lang3" % "3.1" //functions missing in the Java library
@@ -28,6 +29,7 @@ object Build extends Build {
       , "com.sun.jersey" % "jersey-core" % jerseyVersion
       , "com.sun.jersey" % "jersey-client" % jerseyVersion
       , "com.sun.jersey.contribs" % "jersey-apache-client" % jerseyVersion
+      , "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % "2.2.2"
       , "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion
       , "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion
       , "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion

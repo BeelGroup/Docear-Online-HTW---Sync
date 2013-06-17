@@ -3,6 +3,12 @@ package org.docear.syncdaemon;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
+import java.util.UUID;
+
+import org.apache.commons.io.FilenameUtils;
+
+import static org.apache.commons.io.FileUtils.getTempDirectoryPath;
+
 public final class TestUtils {
     private TestUtils() {
     }
@@ -14,7 +20,9 @@ public final class TestUtils {
     }
 
     public static Daemon testDaemon() {
-        return testDaemonWithAdditionalConfiguration("");
+        String tmpPath = getTempDirectoryPath() + "/docear-sync/" + UUID.randomUUID().toString();
+        tmpPath = FilenameUtils.normalize(tmpPath).replace("\\", "/");
+        return testDaemonWithAdditionalConfiguration("daemon.docear.home=\"" + tmpPath + "\"");
     }
 
     public static String diSetting(final Class interfaceClass, final Class implClass) {
