@@ -24,9 +24,5 @@ public interface IndexDbService {
      */
     public FileMetaData getFileMetaData(FileMetaData fileMetaData) throws PersistenceException;
     
-    public String getProjectRootPath(String projectId) throws PersistenceException;
-    
     public void deleteProject(String projectId) throws PersistenceException;
-    
-    public void addProject(String projectId, String rootPath) throws PersistenceException;
 }

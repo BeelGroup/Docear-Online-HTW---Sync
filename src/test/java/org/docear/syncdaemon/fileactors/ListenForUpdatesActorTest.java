@@ -126,8 +126,7 @@ public class ListenForUpdatesActorTest {
         	response.setDeletedProjects(deletedProjects);
         	
         	indexDbService.save(FileMetaData.file(filePath, "hash", projectId, true, 8));
-        	indexDbService.addProject(projectId, "/root/path");
-        
+
         	//listenForUpdatesActor.tell(response, fileChangeActor);
 
         	int iterationCnt = 10;
