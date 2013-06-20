@@ -60,6 +60,7 @@ public class FileChangeActorTestsITest {
     @AfterClass
     public static void afterClass() {
         deleteTestFile();
+        daemon.onStop();
     }
 
     @Before
