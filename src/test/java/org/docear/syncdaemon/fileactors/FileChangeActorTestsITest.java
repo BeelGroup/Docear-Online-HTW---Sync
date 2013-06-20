@@ -234,6 +234,8 @@ public class FileChangeActorTestsITest {
         return clientService.getCurrentFileMetaData(user, fileMetaData).getRevision();
     }
 
+
+
     private static void deleteTestFile() {
         //delete locally
         if (fileOnFS.exists()) {
