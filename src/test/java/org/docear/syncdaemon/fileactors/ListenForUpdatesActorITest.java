@@ -47,7 +47,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.HashMap;
 
-public class ListenForUpdatesActorTest {
+public class ListenForUpdatesActorITest {
 
     private final HashAlgorithm hashAlgorithm = new SHA2();
     private final User user = new User("Julius", "Julius-token");
