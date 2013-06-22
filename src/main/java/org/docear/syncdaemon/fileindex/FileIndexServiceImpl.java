@@ -39,17 +39,30 @@ public class FileIndexServiceImpl extends UntypedActor implements
             long localRev = indexDbService.getProjectRevision(project.getId());
 
             if (localRev != project.getRevision()) {
-                List<FileMetaData> files = FileReceiver.receiveFiles(project);
-
+                List<FileMetaData> fmdsFromScan = FileReceiver.receiveFiles(project);
+                List<FileMetaData> fmdsFromIndexDb = indexDbService.getFileMetaDatas(project.getId());
+                
                 // TODO user credentials required to use clientService
-                for (FileMetaData fmdFromScan : files) {
-                    final FileMetaData fmdFromIndexDb = indexDbService.getFileMetaData(fmdFromScan);
-                    if (fmdFromScan.isChanged(fmdFromIndexDb)) {
-                    	sendFileChangedMessage(fmdFromScan);
-                    } else {
-                    	// TODO is this case relevant?
-                    	//sendConflictMesage(fmdFromScan);
+                for (FileMetaData fmdFromScan : fmdsFromScan) {
+                	FileMetaData match = null;
+                	for (FileMetaData fmdFromIndexDb: fmdsFromIndexDb){
+                		if (fmdFromScan.getPath().equals(fmdFromIndexDb.getPath())){
+                			match = fmdFromIndexDb;
+                			break;
+                		}
+                	}
+                
+                	if (match == null || fmdFromScan.isChanged(match)) {
+                		sendFileChangedMessage(fmdFromScan);
+                	}
+                	
+                	if (match != null){
+                		fmdsFromIndexDb.remove(match);
                     }
+                }
+                
+                for (FileMetaData fmdFromIndexDb : fmdsFromIndexDb) {
+                	sendFileChangedMessage(fmdFromIndexDb);
                 }
             }
         } catch (PersistenceException e) {
