@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import scala.concurrent.duration.Duration;
 
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.DeltaResponse;
@@ -20,10 +22,8 @@ import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.org.apache.bcel.internal.generic.InstructionConstants.Clinit;
-
-
 import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 import akka.actor.UntypedActor;
 
 public class ListenForUpdatesActor extends UntypedActor {
@@ -124,17 +124,15 @@ public class ListenForUpdatesActor extends UntypedActor {
         	}
 	        	
         	// listen again
-        	ListenForUpdatesResponse restartResponse = null;
-        	int itCounter = 0;
-        	while (restartResponse == null || itCounter < 10){
-        		restartResponse = clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf());
-        		itCounter++;
-        	} 
-        	
+        	this.getSelf().tell(new Messages.ListenAgain(), this.getSelf());
+        } else if (message instanceof Messages.ListenAgain){
+        	ListenForUpdatesResponse restartResponse = clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf());
+        	 
         	if (restartResponse != null) {
         		this.getSelf().tell(restartResponse, this.getSelf());
         	} else {
-        		logger.error("ListenForUpdatesResponse was null. Can't listen for updates again.");
+        		ActorSystem system = ActorSystem.apply();
+        		system.scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), this.getSelf(), new Messages.ListenAgain(), system.dispatcher());
         	}
         }
     }

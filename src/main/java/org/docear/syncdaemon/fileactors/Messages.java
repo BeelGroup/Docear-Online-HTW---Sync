@@ -80,12 +80,15 @@ public class Messages {
         private Map<String, Long> projectIdRevisionMap;
 
         public StartListening(Map<String, Long> projectIdRevisionMap) {
-
             this.projectIdRevisionMap = projectIdRevisionMap;
         }
 
         public Map<String, Long> getProjectIdRevisionMap() {
             return projectIdRevisionMap;
         }
+    }
+    
+    public static final class ListenAgain {
+    	
     }
 }
