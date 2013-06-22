@@ -1,5 +1,6 @@
 package org.docear.syncdaemon.fileactors;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,6 +19,8 @@ import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sun.org.apache.bcel.internal.generic.InstructionConstants.Clinit;
 
 
 import akka.actor.ActorRef;
@@ -41,6 +44,7 @@ public class ListenForUpdatesActor extends UntypedActor {
         this.configService = configService;
         this.indexDbService = indexDbService;
         this.fileChangeActor = fileChangeActor;
+        this.projectIdRevisonMap = new HashMap<String, Long>();
     }
 
     /**
@@ -52,6 +56,9 @@ public class ListenForUpdatesActor extends UntypedActor {
         if (message instanceof Messages.StartListening) {
         	Messages.StartListening startListing = (Messages.StartListening)message;
         	this.projectIdRevisonMap = startListing.getProjectIdRevisionMap();
+        	if (this.projectIdRevisonMap == null){
+        		this.projectIdRevisonMap = new HashMap<String, Long>();
+        	}
         	this.getSelf().tell(clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf()), this.getSelf());
         } else if(message instanceof ListenForUpdatesResponse) {
         	ListenForUpdatesResponse response = (ListenForUpdatesResponse)message;  
@@ -77,14 +84,13 @@ public class ListenForUpdatesActor extends UntypedActor {
 	        	for (Entry<String, Long> entry : newProjects.entrySet()){
 	        		logger.debug("New Project: " + entry.getKey());
 	        		Project localProject = new Project(entry.getKey(),
-	        				null, // TODO replace with something like daemon().getDefaultProjectPath(),
+	        				configService.getProjectRootPath(entry.getKey()),
 	        				0);
 	        		
 	        		// tell fileChangeActor that there is a new project to create init folder and index db entrys
 	        		fileChangeActor.tell(new ProjectAdded(localProject), this.getSelf());
 	        		
 	        		// get deltas and process them as usual
-	        		logger.debug("user: " + user.getUsername() + " ProjectId: " +localProject.getId() + " ProjectRev: "+  localProject.getRevision());
 	        		DeltaResponse delta = clientService.delta(user, localProject.getId(), localProject.getRevision());
 	        		List<FileMetaData> fmds = delta.getServerMetaDatas();
 	        		
@@ -100,21 +106,36 @@ public class ListenForUpdatesActor extends UntypedActor {
         	
         	// send deleted projects to filechangeactor
         	List<String> deletedProjects = response.getDeletedProjects();
-        	for (String projectId : deletedProjects){
-        		logger.debug("Deleted Project: " + projectId);
-        		Project localProject = getProject(projectId);
-        		
-        		// tell fileChangeActor that there is a deleted project
-        		fileChangeActor.tell(new ProjectDeleted(localProject), this.getSelf());
-        		
-        		// remove project from projectIdRevisonMap for next iteration        		
-        		if (projectIdRevisonMap.containsKey(projectId)){
-        			this.projectIdRevisonMap.remove(projectId);
-        		}
+        	if (deletedProjects != null){
+	        	for (String projectId : deletedProjects){
+	        		logger.debug("Deleted Project: " + projectId);
+	        		Project localProject = new Project(projectId,
+	        				configService.getProjectRootPath(projectId),
+	        				0L);
+	        		
+	        		// tell fileChangeActor that there is a deleted project
+	        		fileChangeActor.tell(new ProjectDeleted(localProject), this.getSelf());
+	        		
+	        		// remove project from projectIdRevisonMap for next iteration        		
+	        		if (projectIdRevisonMap.containsKey(projectId)){
+	        			this.projectIdRevisonMap.remove(projectId);
+	        		}
+	        	}
         	}
-        	
+	        	
         	// listen again
-        	this.getSelf().tell(clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf()), this.getSelf());	
+        	ListenForUpdatesResponse restartResponse = null;
+        	int itCounter = 0;
+        	while (restartResponse == null || itCounter < 10){
+        		restartResponse = clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf());
+        		itCounter++;
+        	} 
+        	
+        	if (restartResponse != null) {
+        		this.getSelf().tell(restartResponse, this.getSelf());
+        	} else {
+        		logger.error("ListenForUpdatesResponse was null. Can't listen for updates again.");
+        	}
         }
     }
 
@@ -122,3 +143,4 @@ public class ListenForUpdatesActor extends UntypedActor {
         return new Project(projectId, configService.getProjectRootPath(projectId), indexDbService.getProjectRevision(projectId));
     }
 }
+
