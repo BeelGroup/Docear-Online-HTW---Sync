@@ -3,8 +3,12 @@ package org.docear.syncdaemon.indexdb;
 import static org.docear.syncdaemon.TestUtils.testDaemon;
 import static org.fest.assertions.Assertions.assertThat;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.projects.Project;
@@ -79,5 +83,25 @@ public class H2IndexDbServiceTest {
         assertThat(service.getProjectRevision(projectId)).isEqualTo(2);
         service.deleteProject(projectId);
         assertThat(service.getProjectRevision(projectId)).isEqualTo(0);
+    }
+
+    @Test
+    public void testGetFileMetaDatas() throws Exception {
+        final String projectId = "hello";
+        final String path1 = "/src/main/java/Main.java";
+        final FileMetaData metaData1 = FileMetaData.newFile(path1, "6d32f9ecafba3ecfdf686471a4d1fec68bb99aa4c9a55a3e200df0f62c03c425e34446c5f8afb4625784e5a82ea333b01b13524f9313c30385b6d49d665028b3", projectId);
+        final String path2 = "/src/test/java/MainTest.java";
+        final FileMetaData metaData2 = FileMetaData.newFile(path2, "7d32f9ecafba3ecfdf686471a4d1fec68bb99aa4c9a55a3e200df0f62c03c425e34446c5f8afb4625784e5a82ea333b01b13524f9313c30385b6d49d665028b3", projectId);
+        service.save(metaData1);
+        service.save(metaData2);
+        final Collection<String> savedPaths = Collections2.transform(service.getFileMetaDatas(projectId), new Function<FileMetaData, String>() {
+            @Override
+            public String apply(FileMetaData input) {
+                return input.getPath();
+            }
+        });
+        service.getFileMetaDatas(projectId);
+        assertThat(savedPaths).hasSize(2);
+        assertThat(savedPaths).contains(path1, path2);
     }
 }
