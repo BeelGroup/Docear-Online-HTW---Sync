@@ -22,7 +22,7 @@ public class GetFileMetaDataITest {
         final FileMetaData metadata = clientService.getCurrentFileMetaData(user, FileMetaData.file(File.separator+"README.md", "122233a", "507f191e810c19729de860ea", false, 0));
         assertThat(metadata.getProjectId()).isEqualTo("507f191e810c19729de860ea");
         assertThat(metadata.getHash()).isEqualTo("122233a");
-        assertThat(metadata.getPath()).isEqualTo(File.separator+"README.md");
+        assertThat(metadata.getPath()).isEqualTo("/README.md");
         assertThat(metadata.getRevision()).isEqualTo(1);
     }
 

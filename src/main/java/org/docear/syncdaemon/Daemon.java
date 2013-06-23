@@ -1,30 +1,21 @@
 package org.docear.syncdaemon;
 
-import java.lang.reflect.Constructor;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
+import akka.actor.*;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.config.ConfigService;
 import org.docear.syncdaemon.fileactors.FileChangeActor;
 import org.docear.syncdaemon.fileactors.ListenForUpdatesActor;
+import org.docear.syncdaemon.fileactors.Messages;
 import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import akka.actor.Actor;
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
-import akka.actor.UntypedActor;
-import akka.actor.UntypedActorFactory;
-
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import java.lang.reflect.Constructor;
+import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -35,8 +26,6 @@ public class Daemon {
     private List<Plugin> plugins = new LinkedList<Plugin>();
     private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = Collections.synchronizedMap(new HashMap<Class, Object>());
 
-
-    private User user = new User("Julius","Julius-token");
     private ActorSystem actorSystem;
 
     private ActorRef fileChangeActor;
@@ -50,7 +39,15 @@ public class Daemon {
         this.config = config;
         setupActors();
         setupPlugins();
-        //TODO instantiate fileChangeActor
+    }
+
+    private void startListening() {
+        final List<Project> projects = service(ConfigService.class).getProjects();
+        final Map<String, Long> projectRevisionMap = new HashMap<String, Long>();
+
+        for(Project project : projects) {
+            projectRevisionMap.put(project.getId(),project.getRevision());
+        }
     }
 
     private void setupPlugins() {
@@ -193,7 +190,7 @@ public class Daemon {
     }
     
     public User getUser(){
-    	return user;
+    	return service(ConfigService.class).getUser();
     }
 
     /* in package scope for testing */

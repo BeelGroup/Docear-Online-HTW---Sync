@@ -20,7 +20,6 @@ import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConfigServiceImpl.class);
-	//private ProjectCollection projectCollection;
     private Conf localConf;
 	private File syncDaemonHome;
 	private File configFile;
@@ -86,13 +85,8 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 	@Override
 	public void saveConfig(){
 		try {
-			if (localConf.getProjects().size() > 0){
-				String xml = xmlMapper.writeValueAsString(localConf);
-				FileUtils.writeStringToFile(configFile, xml);
-			} else {
-				if (configFile.exists())
-					FileUtils.forceDelete(configFile);
-			}
+            String xml = xmlMapper.writeValueAsString(localConf);
+            FileUtils.writeStringToFile(configFile, xml);
 		} catch (JsonProcessingException e) {
 			logger.error("Error while mapping xml.", e);
 		} catch (IOException e) {

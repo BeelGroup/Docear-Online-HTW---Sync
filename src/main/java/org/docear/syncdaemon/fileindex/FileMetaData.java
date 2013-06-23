@@ -1,7 +1,5 @@
 package org.docear.syncdaemon.fileindex;
 
-import org.apache.commons.io.FilenameUtils;
-
 public final class FileMetaData {
 	// path always starts with "/"
     final String path;
@@ -15,7 +13,7 @@ public final class FileMetaData {
     final long revision;
 
     public FileMetaData(String path, String hash, String projectId, boolean isFolder, boolean isDeleted, long revision) {
-        this.path = FilenameUtils.normalizeNoEndSeparator(FilenameUtils.separatorsToSystem(path));
+        this.path = normalizePath(path);
         this.hash = hash;
         this.projectId = projectId;
         this.isFolder = isFolder;
@@ -88,5 +86,12 @@ public final class FileMetaData {
     		&& this.path.equals(other.path)
     		&& this.projectId.equals(other.projectId)
     		&& this.revision == other.revision;
+    }
+
+    private String normalizePath(String path) {
+        final String nPath = path.replace('\\','/');
+        if(nPath.endsWith("/") && nPath.length() > 1)
+            return nPath.substring(0, nPath.length()-1);
+        return nPath;
     }
 }

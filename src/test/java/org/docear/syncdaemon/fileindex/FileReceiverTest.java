@@ -1,16 +1,16 @@
 package org.docear.syncdaemon.fileindex;
 
-import static org.fest.assertions.Assertions.assertThat;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.docear.syncdaemon.hashing.HashAlgorithm;
 import org.docear.syncdaemon.hashing.SHA2;
 import org.docear.syncdaemon.projects.Project;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import static org.fest.assertions.Assertions.assertThat;
 
 public class FileReceiverTest {
 
@@ -33,9 +33,12 @@ public class FileReceiverTest {
 		File file = new File(projectPath + "/rootFile.pptx");
 		FileMetaData md0 = new FileMetaData("/rootFile.pptx", hashAlgo.generate(file), projectId, false, false, -1);
 		FileMetaData md1 = new FileMetaData("/folder0", null, projectId, true, false, -1);
-		
+        System.out.println("md0: "+md0);
+        System.out.println("md1: "+md1);
+
 		int matchCounter = 0;
 		for (FileMetaData fmd : files){
+            System.out.println(fmd);
 			if (md0.equals(fmd) || md1.equals(fmd)){
 				matchCounter++;
 			}

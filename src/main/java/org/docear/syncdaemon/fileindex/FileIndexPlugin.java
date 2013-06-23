@@ -1,17 +1,17 @@
 package org.docear.syncdaemon.fileindex;
 
-import java.util.List;
-
+import akka.actor.ActorRef;
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.Plugin;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.ClientServiceImpl;
-import org.docear.syncdaemon.fileactors.FileChangeActor;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.h2.H2IndexDbService;
 import org.docear.syncdaemon.projects.LocalProjectService;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
+
+import java.util.List;
 
 public class FileIndexPlugin extends Plugin{
 
@@ -27,9 +27,10 @@ public class FileIndexPlugin extends Plugin{
         final List<Project> projects = projectService.getProjects();
         final FileIndexServiceFactory factory = daemon().service(FileIndexServiceFactoryImpl.class);
         final User user = daemon().getUser();
-        final FileChangeActor fileChangeActor = new FileChangeActor(clientService, indexDbService, user);
+        final ActorRef fileChangeActor = daemon().getFileChangeActor();
+
         for (final Project project : projects) {
-            factory.create(project, fileChangeActor.getSelf());
+            factory.create(project, fileChangeActor);
         }
     }
 
