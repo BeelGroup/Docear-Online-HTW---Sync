@@ -118,6 +118,7 @@ public class Daemon {
     public synchronized <T> T service(Class<T> clazz) {
             T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
             if (result == null) {
+                logger.info("initializing service for " + clazz.getName());
                 final String implClassName = config.getString("daemon.di." + clazz.getName());
                 if (isNotEmpty(implClassName)) {
                     result = createInstanceWithDefaultConstructor(implClassName);
@@ -129,6 +130,7 @@ public class Daemon {
                 } else {
                     throw new IllegalStateException("can't find implementation for " + clazz);
                 }
+                logger.info("initialized " + implClassName);
             }
             return result;
     }
