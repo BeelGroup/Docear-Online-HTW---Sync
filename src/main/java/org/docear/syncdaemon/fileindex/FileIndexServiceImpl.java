@@ -2,9 +2,12 @@ package org.docear.syncdaemon.fileindex;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
+import net.contentobjects.jnotify.JNotify;
+import net.contentobjects.jnotify.JNotifyException;
 import org.docear.syncdaemon.fileactors.Messages.FileChangedLocally;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.PersistenceException;
+import org.docear.syncdaemon.jnotify.Listener;
 import org.docear.syncdaemon.projects.Project;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,8 @@ public class FileIndexServiceImpl extends UntypedActor implements
     private ActorRef recipient;
     private Project project;
     private IndexDbService indexDbService;
+    private int jNotifyWatchId;
+
 
     public FileIndexServiceImpl(IndexDbService indexDbService) {
         this.indexDbService = indexDbService;
@@ -73,6 +78,15 @@ public class FileIndexServiceImpl extends UntypedActor implements
             }
         } catch (PersistenceException e) {
             logger.error("can't scan projects", e);
+        }
+        final Listener listener = new Listener(project,recipient);
+        try {
+            jNotifyWatchId = JNotify.addWatch(project.getRootPath(),JNotify.FILE_ANY,true,listener);
+        } catch (JNotifyException e) {
+            try {
+                JNotify.removeWatch(jNotifyWatchId);
+            } catch (JNotifyException e1) {
+            }
         }
     }
 
