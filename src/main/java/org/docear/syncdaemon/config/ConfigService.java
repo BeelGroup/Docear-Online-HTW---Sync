@@ -1,9 +1,10 @@
 package org.docear.syncdaemon.config;
 
+import org.docear.syncdaemon.projects.Project;
+import org.docear.syncdaemon.users.User;
+
 import java.io.File;
 import java.util.List;
-
-import org.docear.syncdaemon.projects.Project;
 
 public interface ConfigService {
 
@@ -14,4 +15,5 @@ public interface ConfigService {
 	void saveConfig();
     File getSyncDaemonHome();
     File getDocearHome();
+    User getUser();
 }

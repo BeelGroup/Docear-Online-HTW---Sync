@@ -1,27 +1,27 @@
 package org.docear.syncdaemon.config;
 
-import static org.apache.commons.io.FileUtils.getUserDirectory;
-import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.typesafe.config.Config;
+import org.apache.commons.io.FileUtils;
+import org.docear.syncdaemon.NeedsConfig;
+import org.docear.syncdaemon.projects.Project;
+import org.docear.syncdaemon.users.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
-import org.docear.syncdaemon.NeedsConfig;
-import org.docear.syncdaemon.projects.Project;
-import org.docear.syncdaemon.projects.ProjectCollection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.typesafe.config.Config;
+import static org.apache.commons.io.FileUtils.getUserDirectory;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConfigServiceImpl.class);
-	private ProjectCollection projectCollection;
+	//private ProjectCollection projectCollection;
+    private Conf localConf;
 	private File syncDaemonHome;
 	private File configFile;
 	private XmlMapper xmlMapper;
@@ -45,48 +45,49 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
         try {
 			FileUtils.forceMkdir(syncDaemonHome);
 		
-			configFile = new File(syncDaemonHome, "projectsConfig.xml");
+			configFile = new File(syncDaemonHome, "config.xml");
 			if (!configFile.exists()){
 				logger.debug("config file not existing.");
-				projectCollection = new ProjectCollection();
+				localConf = new Conf();
 			} else {
+                //file present
 				logger.debug("config file exists: " + configFile.getAbsolutePath());
-				projectCollection = xmlMapper.readValue(configFile, ProjectCollection.class);
+				localConf = xmlMapper.readValue(configFile, Conf.class);
 			}
+
 		} catch (IOException e) {
 			logger.error("Error while initialising ConfigServiceImpl in \"" + configFile.getAbsolutePath() + "\".", e);
 		}
     }
 
 
-
     @Override
 	public List<Project> getProjects() {
-		return projectCollection.getProjects();
+		return localConf.getProjects();
 	}
 
 	@Override
 	public void addProject(Project project) {
-		projectCollection.addProject(project);
+        localConf.getProjects().add(project);
 		saveConfig();
 	}
 
 	@Override
 	public void deleteProject(Project project) {
-		projectCollection.deleteProject(project);
+        localConf.getProjects().remove(project);
 		saveConfig();
 	}
 
 	@Override
 	public String getProjectRootPath(String projectId) {
-		return projectCollection.getProjectRootPath(projectId);
-	}
+        return localConf.getProjectRootPath(projectId);
+    }
 
 	@Override
 	public void saveConfig(){
 		try {
-			if (projectCollection.getProjects().size() > 0){
-				String xml = xmlMapper.writeValueAsString(projectCollection);
+			if (localConf.getProjects().size() > 0){
+				String xml = xmlMapper.writeValueAsString(localConf);
 				FileUtils.writeStringToFile(configFile, xml);
 			} else {
 				if (configFile.exists())
@@ -107,5 +108,10 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
     @Override
     public File getDocearHome() {
         return docearHome;
+    }
+
+    @Override
+    public User getUser() {
+        return localConf.getUser();
     }
 }

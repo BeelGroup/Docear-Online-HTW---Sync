@@ -1,22 +1,19 @@
 package org.docear.syncdaemon.config;
 
-import static org.apache.commons.io.FileUtils.getTempDirectoryPath;
-import static org.docear.syncdaemon.TestUtils.testDaemon;
-import static org.fest.assertions.Assertions.assertThat;
-
-import java.io.File;
-
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.projects.Project;
-import org.docear.syncdaemon.projects.ProjectCollection;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import java.io.File;
+
+import static org.apache.commons.io.FileUtils.getTempDirectoryPath;
+import static org.docear.syncdaemon.TestUtils.testDaemon;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class ConfigServiceImplTest {
     private ConfigService service;
@@ -69,13 +66,13 @@ public class ConfigServiceImplTest {
     	service.addProject(project);
     	service.saveConfig();
     	XmlMapper xmlMapper = new XmlMapper();
-    	File conf = new File(service.getSyncDaemonHome(), "projectsConfig.xml");
+    	File conf = new File(service.getSyncDaemonHome(), "config.xml");
     	assertThat(conf.exists()).isTrue();
-    	ProjectCollection loadedProject = xmlMapper.readValue(conf, ProjectCollection.class);
-    	assertThat(loadedProject).isNotNull();
-    	assertThat(loadedProject.getProjects().size()).isEqualTo(1);
-    	assertThat(loadedProject.getProjects().get(0).getId()).isEqualTo(project.getId());
-    	assertThat(loadedProject.getProjects().get(0).getRevision()).isEqualTo(project.getRevision());
-    	assertThat(loadedProject.getProjects().get(0).getRootPath()).isEqualTo(project.getRootPath());
+    	Conf localConf = xmlMapper.readValue(conf, Conf.class);
+    	assertThat(localConf).isNotNull();
+    	assertThat(localConf.getProjects().size()).isEqualTo(1);
+    	assertThat(localConf.getProjects().get(0).getId()).isEqualTo(project.getId());
+    	assertThat(localConf.getProjects().get(0).getRevision()).isEqualTo(project.getRevision());
+    	assertThat(localConf.getProjects().get(0).getRootPath()).isEqualTo(project.getRootPath());
     }
 }

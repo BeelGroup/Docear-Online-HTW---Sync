@@ -1,0 +1,13 @@
+<config>
+    <user>
+        <username>Julius</username>
+        <accessToken>Julius-token</accessToken>
+    </user>
+    <projects>
+        <project>
+            <id></id>
+            <rootPath></rootPath>
+            <revision></revision>
+        </project>
+    </projects>
+</config>
