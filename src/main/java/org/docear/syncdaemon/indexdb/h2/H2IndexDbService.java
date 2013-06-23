@@ -6,6 +6,7 @@ import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.PersistenceException;
 
 import java.sql.*;
+import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -134,6 +135,11 @@ public class H2IndexDbService implements IndexDbService {
             	statement.setString(1, projectId);
             }
         });
+	}
+    
+	@Override
+	public List<FileMetaData> getFileMetaDatas(String projectId) throws PersistenceException {
+		throw new RuntimeException("Not implemented.");
 	}
 
     public Connection getConnection() throws SQLException {

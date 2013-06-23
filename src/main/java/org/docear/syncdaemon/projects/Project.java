@@ -2,14 +2,15 @@ package org.docear.syncdaemon.projects;
 
 import org.apache.commons.io.FilenameUtils;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-
-@JacksonXmlRootElement(localName="project")
 public class Project {
-    final String id;
+    private String id;
     // rootPath is normalized to current system. there is no end separator
-    final String rootPath;
-    final long revision;
+    private String rootPath;
+    private long revision;
+    
+    public Project(){
+    	// requiered for jackson xml generation
+    }
 
     public Project(String id, String rootPath, long revision) {
         this.id = id;

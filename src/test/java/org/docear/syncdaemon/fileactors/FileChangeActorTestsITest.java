@@ -60,6 +60,7 @@ public class FileChangeActorTestsITest {
     @AfterClass
     public static void afterClass() {
         deleteTestFile();
+        daemon.onStop();
     }
 
     @Before
@@ -232,6 +233,8 @@ public class FileChangeActorTestsITest {
     private Long getCurrentRevisionOnServerOfTestFile() {
         return clientService.getCurrentFileMetaData(user, fileMetaData).getRevision();
     }
+
+
 
     private static void deleteTestFile() {
         //delete locally

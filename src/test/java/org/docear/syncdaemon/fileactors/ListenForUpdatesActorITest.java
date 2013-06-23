@@ -47,22 +47,23 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.HashMap;
 
-public class ListenForUpdatesActorTest {
+public class ListenForUpdatesActorITest {
 
-    private final static HashAlgorithm hashAlgorithm = new SHA2();
-    private final static User user = new User("Julius", "Julius-token");
-    private final static String projectId = "507f191e810c19729de860ea";
-    private final static String rootPath = "D:\\p1";
-    private final static String filePath = "/new.mm";
-    private final static Project project = new Project(projectId, rootPath, 0L);
-    private final static FileMetaData fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
-    private final static File fileOnFS = new File("D:\\p1\\new.mm");
-    private static Daemon daemon;
-    private static ActorRef listenForUpdatesActor;
-    private static TestActorRef<TestActor> fileChangeActor;
-    private static IndexDbService indexDbService;
-    private static ClientService clientService;
-    private static TestActor testActor;
+    private final HashAlgorithm hashAlgorithm = new SHA2();
+    private final User user = new User("Julius", "Julius-token");
+    private final String projectId = "507f191e810c19729de860ea";
+    private final String rootPath = "D:\\p1";
+    private final String filePath = "/new.mm";
+    private final Project project = new Project(projectId, rootPath, 0L);
+    private final FileMetaData fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
+    private final File fileOnFS = new File("D:\\p1\\new.mm");
+    private Daemon daemon;
+    private ActorRef listenForUpdatesActor;
+    private TestActorRef<TestActor> fileChangeActor;
+    private IndexDbService indexDbService;
+    private ClientService clientService;
+    private ConfigService configService;
+    private TestActor testActor;
 
     @Before
     public void setUp(){
@@ -76,6 +77,7 @@ public class ListenForUpdatesActorTest {
         daemon.onStart();
         clientService = daemon.service(ClientService.class);
         indexDbService = daemon.service(IndexDbService.class);
+        configService = daemon.service(ConfigService.class);
 
         listenForUpdatesActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
             @Override
@@ -94,7 +96,6 @@ public class ListenForUpdatesActorTest {
     }
 
     @Test
-    @Ignore
     public void testNewProject() throws PersistenceException {
         	ListenForUpdatesResponse response = new ListenForUpdatesResponse();
         	Map<String, Long> newProjects = new HashMap<String, Long>();
@@ -113,22 +114,30 @@ public class ListenForUpdatesActorTest {
         		} catch (Exception e){}
         	}
 
-        	assertThat(testActor.getTotalCounter()).isEqualTo(1);
+        	assertThat(testActor.getTotalCounter()).isGreaterThan(0);
         	assertThat(testActor.getProjectAddedCounter()).isEqualTo(1);
+        	assertThat(testActor.getProjectDeletedCounter()).isEqualTo(0);
+        	assertThat(testActor.getFileChangedOnServerCounter()).isGreaterThan(0);
     }
 
     @Test
-    @Ignore
     public void testDeleteProject() throws PersistenceException {
         	ListenForUpdatesResponse response = new ListenForUpdatesResponse();
         	List<String> deletedProjects = new LinkedList<String>();
             final String projectId = "507f191e810c19729de860ea";
+            final long revision = 8L;
             deletedProjects.add(projectId);
         	response.setDeletedProjects(deletedProjects);
 
-        	indexDbService.save(FileMetaData.file(filePath, "hash", projectId, true, 8));
+        	indexDbService.setProjectRevision(projectId, revision);
+        	assertThat(indexDbService.getProjectRevision(projectId)).isEqualTo(revision);
+        	configService.addProject(new Project(projectId, "/root/path/", revision));
 
-        	//listenForUpdatesActor.tell(response, fileChangeActor);
+    		try {
+    			Thread.sleep(5000);
+    		} catch (Exception e){}
+    	
+        	listenForUpdatesActor.tell(response, fileChangeActor);
 
         	int iterationCnt = 10;
         	while (iterationCnt > 0

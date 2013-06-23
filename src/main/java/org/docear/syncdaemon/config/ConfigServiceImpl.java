@@ -21,7 +21,7 @@ import com.typesafe.config.Config;
 public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConfigServiceImpl.class);
-	private ProjectCollection projects;
+	private ProjectCollection projectCollection;
 	private File syncDaemonHome;
 	private File configFile;
 	private XmlMapper xmlMapper;
@@ -48,14 +48,13 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 			configFile = new File(syncDaemonHome, "projectsConfig.xml");
 			if (!configFile.exists()){
 				logger.debug("config file not existing.");
-				projects = new ProjectCollection();
+				projectCollection = new ProjectCollection();
 			} else {
-				logger.debug("config file exists.");
-				// TODO fix read error
-				projects = xmlMapper.readValue(configFile, ProjectCollection.class);
+				logger.debug("config file exists: " + configFile.getAbsolutePath());
+				projectCollection = xmlMapper.readValue(configFile, ProjectCollection.class);
 			}
 		} catch (IOException e) {
-			logger.error("Error while initialising ConfigServiceImpl.", e);
+			logger.error("Error while initialising ConfigServiceImpl in \"" + configFile.getAbsolutePath() + "\".", e);
 		}
     }
 
@@ -63,31 +62,31 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 
     @Override
 	public List<Project> getProjects() {
-		return projects.getProjects();
+		return projectCollection.getProjects();
 	}
 
 	@Override
 	public void addProject(Project project) {
-		projects.addProject(project);
+		projectCollection.addProject(project);
 		saveConfig();
 	}
 
 	@Override
 	public void deleteProject(Project project) {
-		projects.deleteProject(project);
+		projectCollection.deleteProject(project);
 		saveConfig();
 	}
 
 	@Override
 	public String getProjectRootPath(String projectId) {
-		return projects.getProjectRootPath(projectId);
+		return projectCollection.getProjectRootPath(projectId);
 	}
 
 	@Override
 	public void saveConfig(){
 		try {
-			if (projects.getProjects().size() > 0){
-				String xml = xmlMapper.writeValueAsString(projects);
+			if (projectCollection.getProjects().size() > 0){
+				String xml = xmlMapper.writeValueAsString(projectCollection);
 				FileUtils.writeStringToFile(configFile, xml);
 			} else {
 				if (configFile.exists())

@@ -7,26 +7,26 @@ import java.util.Map;
 
 public class ProjectCollection {
 
-	private List<Project> projectList;
+	private List<Project> projects;
 	private Map<String, String> projectRootPaths;
 	
 	public ProjectCollection() {
-		projectList = new LinkedList<Project>();
+		projects = new LinkedList<Project>();
 		projectRootPaths = new HashMap<String, String>();
 	}
 
 	public List<Project> getProjects() {
-		return projectList;
+		return projects;
 	}
 
 	public void addProject(Project project) {
-		projectList.add(project);
+		projects.add(project);
 		projectRootPaths.put(project.getId(), project.getRootPath());
 	}
 
 	public void deleteProject(Project project) {
-		if (projectList.contains(project))
-			projectList.remove(project);
+		if (projects.contains(project))
+			projects.remove(project);
 		if (projectRootPaths.containsKey(project.getId()))
 			projectRootPaths.remove(project.getId());	
 	}
