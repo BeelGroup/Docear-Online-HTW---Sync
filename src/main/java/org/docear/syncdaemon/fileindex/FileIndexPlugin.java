@@ -29,12 +29,16 @@ public class FileIndexPlugin extends Plugin{
 
         final List<Project> projects = projectService.getProjects();
         final FileIndexServiceFactory factory = daemon().service(FileIndexServiceFactory.class);
+        factory.setActorSystem(daemon().getActorSystem());
+        factory.setIndexDbService(indexDbService);
         final User user = daemon().getUser();
         final ActorRef fileChangeActor = daemon().getFileChangeActor();
 
         for (final Project project : projects) {
             factory.create(project, fileChangeActor);
         }
+
+        daemon().startListening();
         logger.info("FileIndex Plugin started!");
     }
 

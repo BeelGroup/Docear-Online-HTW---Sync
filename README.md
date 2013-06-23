@@ -18,6 +18,8 @@
 * IntelliJ IDEA: `sbt gen-idea`
 
 ### Run
+* Copy "config.xml" to %USER_HOME%/.docear/projects/config.xml
+* adjust user credentials in config.xml
 * `sbt run`
 * kill with Strg + c or `kill -15 <PID>`
 

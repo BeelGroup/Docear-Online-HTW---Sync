@@ -12,7 +12,12 @@ public class FileIndexServiceFactoryImpl implements FileIndexServiceFactory {
     private ActorSystem system;
 
     public FileIndexServiceFactoryImpl() {
-        system = ActorSystem.create("FileIndexServiceFactoryActorSystem");
+
+    }
+
+    @Override
+    public void setActorSystem(ActorSystem system) {
+        this.system = system;
     }
 
     @Override

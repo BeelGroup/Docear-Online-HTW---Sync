@@ -217,11 +217,14 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             formData.add(entry.getKey(), entry.getValue().toString());
         }
 
+        System.out.println(resource.getURI());
         final ClientResponse clientResponse = resource.post(ClientResponse.class, formData);
 
         if (clientResponse.getStatus() == 200) {
             try {
                 final ListenForUpdatesResponse response = new ObjectMapper().readValue(clientResponse.getEntityInputStream(), ListenForUpdatesResponse.class);
+                if(actorRef != null)
+                    actorRef.tell(response,null);
                 return response;
             } catch (IOException e) {
                 throw new RuntimeException("problem parsing listenForUpdatesResult");

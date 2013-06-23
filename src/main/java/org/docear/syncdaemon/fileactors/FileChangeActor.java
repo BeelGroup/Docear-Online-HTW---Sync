@@ -12,6 +12,7 @@ import org.docear.syncdaemon.hashing.SHA2;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
+import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 
 import java.io.*;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class FileChangeActor extends UntypedActor {
 
+    private final org.slf4j.Logger logger = LoggerFactory.getLogger(FileChangeActor.class);
     private final HashAlgorithm hashAlgorithm = new SHA2();
     private ClientService clientService;
     private IndexDbService indexDbService;
@@ -55,6 +57,7 @@ public class FileChangeActor extends UntypedActor {
             // create root dir in FS
             FileUtils.forceMkdir(new File(projectAdded.getProject().getRootPath()));
 
+
             //TODO add project
         }
     }
@@ -89,7 +92,7 @@ public class FileChangeActor extends UntypedActor {
             //is existing file
             else {
                 if (!hashAlgorithm.isValidHash(fileMetaDataFS.getHash())) {
-                    throw new IllegalArgumentException("No valid hash for FS file");
+                    throw new IllegalArgumentException("No valid hash for FS file: "+fileMetaDataFS.getHash());
                 }
 
                 UploadResponse uploadResponse = null;
@@ -128,25 +131,25 @@ public class FileChangeActor extends UntypedActor {
         //final FileMetaData fileMetaDataFS = getFSMetadata(project, fileMetaDataServer);
 
         // check if server revision is already known
-        if(fileMetaDataDB != null && fileMetaDataDB.getRevision() == fileMetaDataServer.getRevision()) {
+        if (fileMetaDataDB != null && fileMetaDataDB.getRevision() == fileMetaDataServer.getRevision()) {
             // nothing to do;
             return;
         }
         // check if file/folder has been deleted
-        else if(fileMetaDataServer.isDeleted()) {
+        else if (fileMetaDataServer.isDeleted()) {
             file.delete();
             indexDbService.save(fileMetaDataServer);
         }
         // check if new file is a folder
-        else if(fileMetaDataServer.isFolder()) {
-            if(file.exists())
+        else if (fileMetaDataServer.isFolder()) {
+            if (file.exists())
                 file.delete();
             file.mkdirs();
             indexDbService.save(fileMetaDataServer);
         }
         // is an on the server existing file
         else {
-            downloadAndPutFile(project,fileMetaDataServer);
+            downloadAndPutFile(project, fileMetaDataServer);
             indexDbService.save(fileMetaDataServer);
         }
     }
@@ -179,15 +182,20 @@ public class FileChangeActor extends UntypedActor {
             final File file = getFile(project, fileMetaData);
 
             in = clientService.download(user, fileMetaData);
-            out = new FileOutputStream(file);
 
-            IOUtils.copy(in, out);
+            if (in == null) {
+                logger.error("Could not find File online");
+            } else {
+                out = new FileOutputStream(file);
+
+                IOUtils.copy(in, out);
+            }
         } catch (IOException e) {
             //problem deleting file. May be locked
             //scheduling a retry in 30 seconds
             final ActorSystem system = getContext().system();
             system.scheduler().scheduleOnce(Duration.apply(30, TimeUnit.SECONDS), getSelf(), new Messages.FileChangedOnServer(project, fileMetaData), system.dispatcher());
-            throw new IOException("Could not delete file. It may be locked. Rescheduled event in 30 seconds.");
+            logger.warn("Could not delete file. It may be locked. Rescheduled event in 30 seconds.", e);
         } finally {
             IOUtils.closeQuietly(in);
             IOUtils.closeQuietly(out);

@@ -21,13 +21,10 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class Daemon {
     private static final Logger logger = LoggerFactory.getLogger(Daemon.class);
-
+    private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = Collections.synchronizedMap(new HashMap<Class, Object>());
     private Config config;
     private List<Plugin> plugins = new LinkedList<Plugin>();
-    private final Map<Class, Object> serviceInterfaceToServiceInstanceMap = Collections.synchronizedMap(new HashMap<Class, Object>());
-
     private ActorSystem actorSystem;
-
     private ActorRef fileChangeActor;
     private ActorRef listenForUpdatesActor;
 
@@ -41,12 +38,22 @@ public class Daemon {
         setupPlugins();
     }
 
-    private void startListening() {
-        final List<Project> projects = service(ConfigService.class).getProjects();
-        final Map<String, Long> projectRevisionMap = new HashMap<String, Long>();
+    public static Daemon createWithAdditionalConfig(final Config config) {
+        final Daemon daemon = new Daemon();
+        daemon.config = config.withFallback(daemon.config);
+        return daemon;
+    }
 
-        for(Project project : projects) {
-            projectRevisionMap.put(project.getId(),project.getRevision());
+    public void startListening() {
+        if (!config.getBoolean("fileactors.listener.disabled")) {
+            final List<Project> projects = service(ConfigService.class).getProjects();
+            final Map<String, Long> projectRevisionMap = new HashMap<String, Long>();
+
+            for (Project project : projects) {
+                projectRevisionMap.put(project.getId(), project.getRevision());
+            }
+
+            listenForUpdatesActor.tell(new Messages.StartListening(projectRevisionMap), null);
         }
     }
 
@@ -86,7 +93,6 @@ public class Daemon {
         }), "listenForUpdatesActor");
     }
 
-
     private Plugin instantiatePlugin(String className) {
         try {
             final Class<?> pluginClass = Class.forName(className);
@@ -100,42 +106,36 @@ public class Daemon {
         }
     }
 
-    public static Daemon createWithAdditionalConfig(final Config config) {
-        final Daemon daemon = new Daemon();
-        daemon.config = config.withFallback(daemon.config);
-        return daemon;
-    }
-
     public <T extends Plugin> T plugin(Class<T> clazz) {
         for (final Plugin plugin : plugins) {
             if (clazz.isInstance(plugin)) {
-                return (T)plugin;
+                return (T) plugin;
             }
         }
         return null;
     }
 
     public synchronized <T> T service(Class<T> clazz) {
-            T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
-            if (result == null) {
-                logger.info("initializing service for " + clazz.getName());
-                final String implClassName = config.getString("daemon.di." + clazz.getName());
-                if (isNotEmpty(implClassName)) {
-                    result = createInstanceWithDefaultConstructor(implClassName);
-                    if (result instanceof NeedsConfig) {
-                        final NeedsConfig needsConfig = (NeedsConfig) result;
-                        needsConfig.setConfig(config);
-                    }
-                    serviceInterfaceToServiceInstanceMap.put(clazz, result);
-                } else {
-                    throw new IllegalStateException("can't find implementation for " + clazz);
+        T result = (T) serviceInterfaceToServiceInstanceMap.get(clazz);
+        if (result == null) {
+            logger.info("initializing service for " + clazz.getName());
+            final String implClassName = config.getString("daemon.di." + clazz.getName());
+            if (isNotEmpty(implClassName)) {
+                result = createInstanceWithDefaultConstructor(implClassName);
+                if (result instanceof NeedsConfig) {
+                    final NeedsConfig needsConfig = (NeedsConfig) result;
+                    needsConfig.setConfig(config);
                 }
-                logger.info("initialized " + implClassName);
+                serviceInterfaceToServiceInstanceMap.put(clazz, result);
+            } else {
+                throw new IllegalStateException("can't find implementation for " + clazz);
             }
-            return result;
+            logger.info("initialized " + implClassName);
+        }
+        return result;
     }
 
-    private <T> T createInstanceWithDefaultConstructor(String implClassName){
+    private <T> T createInstanceWithDefaultConstructor(String implClassName) {
         try {
             final Class<?> implClass = Class.forName(implClassName);
             return (T) implClass.newInstance();
@@ -165,7 +165,7 @@ public class Daemon {
         for (final Plugin plugin : plugins) {
             plugin.onStop();
         }
-	}
+    }
 
     public Config getConfig() {
         return config;
@@ -174,25 +174,25 @@ public class Daemon {
     public ActorRef getFileChangeActor() {
         return fileChangeActor;
     }
-    
-    public void setListenForUpdatesActor(ActorRef listenForUpdatesActor) {
-		this.listenForUpdatesActor = listenForUpdatesActor;
-	}
-    
-    public ActorRef getListenForUpdatesActor() {
-		return listenForUpdatesActor;
-	}
 
     public void setFileChangeActor(ActorRef fileChangeActor) {
         this.fileChangeActor = fileChangeActor;
     }
 
+    public ActorRef getListenForUpdatesActor() {
+        return listenForUpdatesActor;
+    }
+
+    public void setListenForUpdatesActor(ActorRef listenForUpdatesActor) {
+        this.listenForUpdatesActor = listenForUpdatesActor;
+    }
+
     public ActorSystem getActorSystem() {
         return actorSystem;
     }
-    
-    public User getUser(){
-    	return service(ConfigService.class).getUser();
+
+    public User getUser() {
+        return service(ConfigService.class).getUser();
     }
 
     /* in package scope for testing */

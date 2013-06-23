@@ -63,7 +63,7 @@ public class H2IndexDbService implements IndexDbService {
             }
         });
         if (revision == null) {
-            throw new PersistenceException("projekt " + projectId + "not in database");
+            throw new PersistenceException("project " + projectId + " not in database");
         }
         return revision;
     }

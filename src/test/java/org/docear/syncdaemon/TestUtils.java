@@ -20,6 +20,7 @@ public final class TestUtils {
         String tmpPath = getTempDirectoryPath() + "/docear-sync/" + UUID.randomUUID().toString();
         tmpPath = FilenameUtils.normalize(tmpPath).replace("\\", "/");
         config += "\ndaemon.docear.home=\"" + tmpPath + "\"";
+        config += "\nfileactors.listener.disabled=true";
 
         final Config overWritingConfig = ConfigFactory.parseString(config);
 
