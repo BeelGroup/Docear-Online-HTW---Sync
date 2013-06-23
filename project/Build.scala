@@ -16,7 +16,7 @@ object Build extends Build {
       , "com.typesafe.akka" % "akka-actor_2.10" % "2.1.2" //event-driven programming with messages and actors
       , "com.typesafe.akka" % "akka-testkit_2.10" % "2.1.2" //akka testing
       , "joda-time" % "joda-time" % "2.2" //library for timing
-      , "com.google.guava" % "guava" % "14.0.1" //functional programming and utils for collections
+      , "com.google.guava" % "guava" % "14.0.1" % "test"//functional programming and utils for collections
       , "org.apache.commons" % "commons-lang3" % "3.1" //functions missing in the Java library
       , "commons-io" % "commons-io" % "2.4" //file and stream operations
       , "org.slf4j" % "slf4j-api" % "1.7.5" //logging. logger for classes

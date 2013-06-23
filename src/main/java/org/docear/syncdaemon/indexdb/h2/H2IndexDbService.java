@@ -6,6 +6,7 @@ import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.PersistenceException;
 
 import java.sql.*;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -97,17 +98,21 @@ public class H2IndexDbService implements IndexDbService {
 
             @Override
             public FileMetaData extractResult(ResultSet resultSet) throws SQLException {
-                final String path = resultSet.getString("path");
-                final String hash = resultSet.getString("hash");
-                final String projectId = resultSet.getString("projectId");
-                final boolean folder = resultSet.getBoolean("isFolder");
-                final boolean deleted = resultSet.getBoolean("isDeleted");
-                final long revision = resultSet.getLong("revision");
-               return new FileMetaData(path, hash, projectId, folder, deleted, revision);
+                return resultToFileMetaData(resultSet);
             }
         });
     }
-    
+
+    private FileMetaData resultToFileMetaData(final ResultSet resultSet) throws SQLException {
+        final String path = resultSet.getString("path");
+        final String hash = resultSet.getString("hash");
+        final String projectId = resultSet.getString("projectId");
+        final boolean folder = resultSet.getBoolean("isFolder");
+        final boolean deleted = resultSet.getBoolean("isDeleted");
+        final long revision = resultSet.getLong("revision");
+        return new FileMetaData(path, hash, projectId, folder, deleted, revision);
+    }
+
     @Override
 	public void deleteProject(final String projectId) throws PersistenceException {
         // delete project from PROJECTS table
@@ -138,8 +143,29 @@ public class H2IndexDbService implements IndexDbService {
 	}
     
 	@Override
-	public List<FileMetaData> getFileMetaDatas(String projectId) throws PersistenceException {
-		throw new RuntimeException("Not implemented.");
+	public List<FileMetaData> getFileMetaDatas(final String projectId) throws PersistenceException {
+        final  List<FileMetaData> fileMetaDatas = execute(new WithQuery<List<FileMetaData>>() {
+            @Override
+            public String sql() {
+                return "SELECT * FROM " + Table.FILES.getName() + " WHERE projectId = ? ORDER BY path";
+            }
+
+            @Override
+            public void statementPreparation(PreparedStatement statement) throws SQLException {
+                statement.setString(1, projectId);
+            }
+
+            @Override
+            public  List<FileMetaData> extractResult(ResultSet resultSet) throws SQLException {
+                List<FileMetaData> result = new LinkedList<FileMetaData>();
+                do {
+                    final FileMetaData fileMetaData = resultToFileMetaData(resultSet);
+                    result.add(fileMetaData);
+                } while (resultSet.next());
+                return result;
+            }
+        });
+        return fileMetaDatas;
 	}
 
     public Connection getConnection() throws SQLException {
