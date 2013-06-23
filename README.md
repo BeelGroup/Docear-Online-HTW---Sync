@@ -20,6 +20,8 @@
 ### Run
 * Copy "config.xml" to %USER_HOME%/.docear/projects/config.xml
 * adjust user credentials in config.xml
+* adjust rootPath for the existing project to an exisiting folder
+* start HTW-Frontend with userMockService
 * `sbt run`
 * kill with Strg + c or `kill -15 <PID>`
 
