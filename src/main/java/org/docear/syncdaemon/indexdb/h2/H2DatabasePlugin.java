@@ -31,7 +31,7 @@ public class H2DatabasePlugin extends Plugin {
     @Override
     public void onStart() {
         logger.info("starting H2 plugin");
-        final String indexDbPath = daemon().service(ConfigService.class).getSyncDaemonHome() + "/db/index";
+        final String indexDbPath = daemon().service(ConfigService.class).getSyncDaemonHome().toString().replace('\\','/') + "/db/index";
         final String connectionUrl = "jdbc:h2:" + indexDbPath;
         getService().setConnectionUrl(connectionUrl);
         loadH2Driver();
@@ -48,6 +48,7 @@ public class H2DatabasePlugin extends Plugin {
         } finally {
             DbUtils.closeQuietly(conn);
         }
+        logger.info("H2 Plugin started!");
     }
 
     private Connection getConnection() throws SQLException {

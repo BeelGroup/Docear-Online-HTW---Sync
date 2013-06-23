@@ -1,17 +1,15 @@
 package org.docear.syncdaemon.fileindex;
 
-import java.util.List;
-
+import akka.actor.ActorRef;
+import akka.actor.UntypedActor;
 import org.docear.syncdaemon.fileactors.Messages.FileChangedLocally;
 import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.PersistenceException;
-import org.docear.syncdaemon.indexdb.h2.H2IndexDbService;
 import org.docear.syncdaemon.projects.Project;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
+import java.util.List;
 
 public class FileIndexServiceImpl extends UntypedActor implements
         FileIndexService {
@@ -19,10 +17,11 @@ public class FileIndexServiceImpl extends UntypedActor implements
 
     private ActorRef recipient;
     private Project project;
-    private final IndexDbService indexDbService;
+    private IndexDbService indexDbService;
 
-    public FileIndexServiceImpl() {
-        indexDbService = new H2IndexDbService();
+    public FileIndexServiceImpl(IndexDbService indexDbService) {
+
+        this.indexDbService = indexDbService;
     }
 
     public void onReceive(Object message) throws Exception {

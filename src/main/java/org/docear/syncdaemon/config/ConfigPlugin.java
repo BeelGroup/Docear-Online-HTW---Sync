@@ -17,9 +17,11 @@ public class ConfigPlugin extends Plugin {
 
 	@Override
 	public void onStart() {
+        logger.info("Config Plugin starting...");
         configService = daemon().service(ConfigService.class);
         final File syncDaemonHome = configService.getSyncDaemonHome();
         logger.info("sync daemon home=" + syncDaemonHome);
+        logger.info("Config Plugin started successfully");
     }
 
 	@Override

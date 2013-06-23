@@ -17,12 +17,14 @@ public class JNotifyPlugin extends Plugin {
 
     @Override
     public void onStart() {
+        logger.info("JNotify Plugin starting...");
         try {
             new NativeLibraryResolver(new File(".")).run();
             logger.info("loaded jnotify");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        logger.info("JNotify Plugin started!");
     }
 
     @Override
