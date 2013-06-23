@@ -4,14 +4,13 @@ import static org.docear.syncdaemon.TestUtils.testDaemon;
 import static org.fest.assertions.Assertions.assertThat;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import org.docear.syncdaemon.Daemon;
 import org.docear.syncdaemon.fileindex.FileMetaData;
-import org.docear.syncdaemon.projects.Project;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -103,5 +102,23 @@ public class H2IndexDbServiceTest {
         service.getFileMetaDatas(projectId);
         assertThat(savedPaths).hasSize(2);
         assertThat(savedPaths).contains(path1, path2);
+    }
+
+    @Test
+    public void testGetProjects() throws Exception {
+        final String project1Id = "project1";
+        final int project1Rev = 1;
+        service.setProjectRevision(project1Id, project1Rev);
+        final String project2Id = "project2";
+        final int project2Rev = 2;
+        service.setProjectRevision(project2Id, project2Rev);
+        assertThat(service.getProjectRevision(project1Id));
+
+
+        final Map<String,Long> projectIdToRevisionMap = service.getProjects();
+        assertThat(projectIdToRevisionMap).hasSize(2);
+        assertThat(projectIdToRevisionMap.get(project1Id)).isEqualTo(project1Rev);
+        assertThat(projectIdToRevisionMap.get(project2Id)).isEqualTo(project2Rev);
+        assertThat(projectIdToRevisionMap.get("not there")).isNull();
     }
 }

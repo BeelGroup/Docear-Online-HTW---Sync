@@ -6,8 +6,10 @@ import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.PersistenceException;
 
 import java.sql.*;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -167,6 +169,37 @@ public class H2IndexDbService implements IndexDbService {
         });
         return fileMetaDatas;
 	}
+
+    @Override
+    public Map<String, Long> getProjects() throws PersistenceException {
+        final  Map<String, Long> result = new HashMap<String, Long>();
+        final  Map<String, Long> fromDatabase = execute(new WithQuery<Map<String, Long>>() {
+            @Override
+            public String sql() {
+                return "SELECT * FROM " + Table.PROJECTS.getName() + " ORDER BY id";//for easy testing purposed it is sorted by project name
+            }
+
+            @Override
+            public void statementPreparation(PreparedStatement statement) throws SQLException {
+                //no parameters to set since we want all projects
+            }
+
+            @Override
+            public  Map<String, Long> extractResult(ResultSet resultSet) throws SQLException {
+                Map<String, Long> projects = new HashMap<String, Long>();
+                do {
+                    final String id = resultSet.getString("id");
+                    final long revision = resultSet.getLong("revision");
+                    projects.put(id, revision);
+                } while (resultSet.next());
+                return projects;
+            }
+        });
+        if (fromDatabase != null) {
+            result.putAll(fromDatabase);
+        }
+        return result;
+    }
 
     public Connection getConnection() throws SQLException {
         if (isEmpty(connectionUrl)) {

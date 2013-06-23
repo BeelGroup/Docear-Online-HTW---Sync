@@ -1,6 +1,7 @@
 package org.docear.syncdaemon.indexdb;
 
 import java.util.List;
+import java.util.Map;
 
 import org.docear.syncdaemon.fileindex.FileMetaData;
 
@@ -29,4 +30,6 @@ public interface IndexDbService {
     public void deleteProject(String projectId) throws PersistenceException;
     
     public List<FileMetaData> getFileMetaDatas(String projectId) throws PersistenceException;
+
+    public Map<String, Long> getProjects() throws PersistenceException;
 }
