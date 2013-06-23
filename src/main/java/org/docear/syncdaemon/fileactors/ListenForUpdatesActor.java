@@ -1,12 +1,8 @@
 package org.docear.syncdaemon.fileactors;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-import scala.concurrent.duration.Duration;
-
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.UntypedActor;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.client.DeltaResponse;
 import org.docear.syncdaemon.client.ListenForUpdatesResponse;
@@ -21,10 +17,13 @@ import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.duration.Duration;
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.UntypedActor;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 public class ListenForUpdatesActor extends UntypedActor {
 
@@ -42,7 +41,7 @@ public class ListenForUpdatesActor extends UntypedActor {
         this.user = user;
         this.clientService = clientService;
         this.configService = configService;
-        this.indexDbService = indexDbService;
+        this.indexDbService = indexDb;
         this.fileChangeActor = fileChangeActor;
         this.projectIdRevisonMap = new HashMap<String, Long>();
     }
@@ -59,7 +58,8 @@ public class ListenForUpdatesActor extends UntypedActor {
         	if (this.projectIdRevisonMap == null){
         		this.projectIdRevisonMap = new HashMap<String, Long>();
         	}
-        	this.getSelf().tell(clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf()), this.getSelf());
+            clientService.listenForUpdates(user, this.projectIdRevisonMap, this.getSelf());
+        	//this.getSelf().tell(), this.getSelf());
         } else if(message instanceof ListenForUpdatesResponse) {
         	ListenForUpdatesResponse response = (ListenForUpdatesResponse)message;  
         	
@@ -75,7 +75,11 @@ public class ListenForUpdatesActor extends UntypedActor {
 	        			FileChangedOnServer changeMessage = new FileChangedOnServer(localProject, fmd);
 	        			fileChangeActor.tell(changeMessage, this.getSelf());
 	        		}
+
+                    indexDbService.setProjectRevision(entry.getKey(),entry.getValue());
+                    projectIdRevisonMap.put(entry.getKey(),entry.getValue());
 	        	}
+
         	}
 
         	// send new projects to filechangeactor
@@ -84,7 +88,7 @@ public class ListenForUpdatesActor extends UntypedActor {
 	        	for (Entry<String, Long> entry : newProjects.entrySet()){
 	        		logger.debug("New Project: " + entry.getKey());
 	        		Project localProject = new Project(entry.getKey(),
-	        				configService.getProjectRootPath(entry.getKey()),
+	        				configService.getSyncDaemonHome().toString()+"/"+entry.getKey(),
 	        				0);
 	        		
 	        		// tell fileChangeActor that there is a new project to create init folder and index db entrys

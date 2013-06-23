@@ -20,7 +20,6 @@ public class FileIndexServiceImpl extends UntypedActor implements
     private IndexDbService indexDbService;
 
     public FileIndexServiceImpl(IndexDbService indexDbService) {
-
         this.indexDbService = indexDbService;
     }
 
@@ -28,6 +27,14 @@ public class FileIndexServiceImpl extends UntypedActor implements
         if (message instanceof StartScanMessage) {
             this.project = ((StartScanMessage) message).getProject();
             this.recipient = ((StartScanMessage) message).getFileChangeActor();
+
+            //look if project exists in db
+            try {
+                indexDbService.getProjectRevision(project.getId());
+            } catch (Exception e) {
+                //not present
+                indexDbService.setProjectRevision(project.getId(),project.getRevision());
+            }
             scanProject();
         }
     }

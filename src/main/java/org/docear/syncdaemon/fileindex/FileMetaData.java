@@ -58,10 +58,10 @@ public final class FileMetaData {
     }
 
     public boolean isChanged(FileMetaData other) {
-        if (other.projectId != projectId) {
+        if (!other.projectId.equals(projectId)) {
             throw new IllegalArgumentException("compared files between different projects");
         }
-        if (other.path != path) {
+        if (!other.path.equals(path)) {
             throw new IllegalArgumentException("compared files for different paths");
         }
         return hash != other.hash;
