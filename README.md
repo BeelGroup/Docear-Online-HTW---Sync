@@ -47,4 +47,4 @@ daemon.di {
 
 ### Packaging
 * `sbt one-jar`
-* the artefact is target/sync-daemon-<version>-one-jar.jar
+* the artefact is `target/sync-daemon-<version>-one-jar.jar`
