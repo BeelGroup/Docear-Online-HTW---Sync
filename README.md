@@ -25,6 +25,7 @@
 * `sbt run`
 * kill with Strg + c or `kill -15 <PID>`
 * changing base URL `sbt -Ddaemon.client.baseurl="http://192.168.178.54:9000/api" run`
+    * note: maybe a firewall blocks the access
 
 ### Configuration for different environments and use cases
 * started with `sbt run` the default configuration is application.conf
