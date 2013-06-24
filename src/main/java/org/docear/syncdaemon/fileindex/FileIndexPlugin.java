@@ -38,7 +38,6 @@ public class FileIndexPlugin extends Plugin{
             factory.create(project, fileChangeActor);
         }
 
-        daemon().startListening();
         logger.info("FileIndex Plugin started!");
     }
 

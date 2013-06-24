@@ -36,6 +36,7 @@ public class Daemon {
         this.config = config;
         setupActors();
         setupPlugins();
+        startListening();
     }
 
     public static Daemon createWithAdditionalConfig(final Config config) {
