@@ -6,10 +6,7 @@ import org.docear.syncdaemon.indexdb.IndexDbService;
 import org.docear.syncdaemon.indexdb.PersistenceException;
 
 import java.sql.*;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -146,7 +143,7 @@ public class H2IndexDbService implements IndexDbService {
     
 	@Override
 	public List<FileMetaData> getFileMetaDatas(final String projectId) throws PersistenceException {
-        final  List<FileMetaData> fileMetaDatas = execute(new WithQuery<List<FileMetaData>>() {
+        final List<FileMetaData> listFromDatabase = execute(new WithQuery<List<FileMetaData>>() {
             @Override
             public String sql() {
                 return "SELECT * FROM " + Table.FILES.getName() + " WHERE projectId = ? ORDER BY path";
@@ -158,7 +155,7 @@ public class H2IndexDbService implements IndexDbService {
             }
 
             @Override
-            public  List<FileMetaData> extractResult(ResultSet resultSet) throws SQLException {
+            public List<FileMetaData> extractResult(ResultSet resultSet) throws SQLException {
                 List<FileMetaData> result = new LinkedList<FileMetaData>();
                 do {
                     final FileMetaData fileMetaData = resultToFileMetaData(resultSet);
@@ -167,12 +164,11 @@ public class H2IndexDbService implements IndexDbService {
                 return result;
             }
         });
-        return fileMetaDatas;
-	}
+        return listFromDatabase != null ? listFromDatabase : Collections.EMPTY_LIST;
+    }
 
     @Override
     public Map<String, Long> getProjects() throws PersistenceException {
-        final  Map<String, Long> result = new HashMap<String, Long>();
         final  Map<String, Long> fromDatabase = execute(new WithQuery<Map<String, Long>>() {
             @Override
             public String sql() {
@@ -195,10 +191,7 @@ public class H2IndexDbService implements IndexDbService {
                 return projects;
             }
         });
-        if (fromDatabase != null) {
-            result.putAll(fromDatabase);
-        }
-        return result;
+        return fromDatabase != null ? fromDatabase : Collections.<String, Long>emptyMap();
     }
 
     public Connection getConnection() throws SQLException {
