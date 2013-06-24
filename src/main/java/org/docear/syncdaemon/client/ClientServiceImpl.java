@@ -55,6 +55,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
         restClient = ApacheHttpClient.create();
 
+        //restClient.addFilter(new LoggingFilter(System.out));
         //check for basic auth user
         try {
             final String basicAuthUser = config.getString("daemon.client.basicauth.username");

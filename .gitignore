@@ -48,3 +48,4 @@ tmp
 julius.conf
 /libjn*
 /jnotify*
+run.staging.bat

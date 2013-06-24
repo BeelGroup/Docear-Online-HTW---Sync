@@ -1,5 +1,7 @@
 package org.docear.syncdaemon.client;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +14,12 @@ public class ListenForUpdatesResponse {
     private Map<String, Long> updatedProjects;
     private Map<String, Long> newProjects;
     private List<String> deletedProjects;
+
+    public ListenForUpdatesResponse() {
+        updatedProjects = new HashMap<String, Long>();
+        newProjects = new HashMap<String, Long>();
+        deletedProjects = new ArrayList<String>();
+    }
 
     public Map<String, Long> getUpdatedProjects() {
         return updatedProjects;

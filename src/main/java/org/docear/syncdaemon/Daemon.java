@@ -14,9 +14,11 @@ import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.duration.Duration;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -37,6 +39,7 @@ public class Daemon {
         this.config = config;
         setupActors();
         setupPlugins();
+
     }
 
     public static Daemon createWithAdditionalConfig(final Config config) {
@@ -54,6 +57,7 @@ public class Daemon {
                 projectRevisionMap.put(project.getId(), project.getRevision());
             }
 
+            //actorSystem.scheduler().scheduleOnce(Duration.apply(5, TimeUnit.SECONDS),listenForUpdatesActor,new Messages.StartListening(projectRevisionMap),actorSystem.dispatcher());
             listenForUpdatesActor.tell(new Messages.StartListening(projectRevisionMap), null);
         }
     }
@@ -151,6 +155,8 @@ public class Daemon {
                 plugin.onStart();
             }
         }
+
+        startListening();
         /**
          * - Actor System for internal and external communication
          * - RUNNING_PID with PID
