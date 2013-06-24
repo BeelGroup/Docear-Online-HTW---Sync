@@ -46,8 +46,8 @@ public class Listener implements JNotifyListener {
     @Override
     public void fileRenamed(final int wd, final String rootPath, final String oldName, final String newName) {
         logger.debug("fileRenamed rootpath={}, oldName={}, newName={}", rootPath, oldName, newName);
-        sendFileChangedMessage(createFileMetaData(rootPath, oldName, false));
-        sendFileChangedMessage(createFileMetaData(rootPath, newName, true));
+        sendFileChangedMessage(createFileMetaData(rootPath, oldName, true));
+        sendFileChangedMessage(createFileMetaData(rootPath, newName, false));
     }
 
     private void sleep(long millis) {

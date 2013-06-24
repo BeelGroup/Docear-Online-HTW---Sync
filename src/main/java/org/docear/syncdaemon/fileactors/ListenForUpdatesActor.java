@@ -120,7 +120,7 @@ public class ListenForUpdatesActor extends UntypedActor {
                     // tell fileChangeActor that there is a deleted project
                     fileChangeActor.tell(new ProjectDeleted(localProject), this.getSelf());
 
-                    // remove project from projectIdRevisonMap for next iteration        		
+                    // remove project from projectIdRevisonMap for next iteration
                     this.indexDbService.deleteProject(projectId);
 
                 }
