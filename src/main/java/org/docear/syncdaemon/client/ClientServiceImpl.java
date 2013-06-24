@@ -37,7 +37,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class ClientServiceImpl implements ClientService, NeedsConfig {
     private Config config;
@@ -84,28 +86,44 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             throw new RuntimeException("file does not belong to project");
         }
 
-        InputStream fileStream = null;
+        InputStream fileInStream = null;
+        InputStream zipInStream = null;
+        ZipOutputStream outStream = null;
+        PipedOutputStream pipeOut = null;
+
         ClientResponse response = null;
         try {
             // get file stream
             final String absoluteFilePath = project.getRootPath() + fileMetaData.getPath();
             final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
-            InputStream fileInStream = new FileInputStream(absoluteFilePath);
-//            final byte[] bytes = FileUtils.readFileToByteArray(new File(absoluteFilePath));
-//            logger.debug("upload => file size: "+ bytes.length);
+            fileInStream = new FileInputStream(absoluteFilePath);
 
+
+            pipeOut = new PipedOutputStream();
+            zipInStream = new PipedInputStream(pipeOut);
+            outStream = new ZipOutputStream(pipeOut);
+            outStream.putNextEntry(new ZipEntry("file"));
+
+
+            IOUtils.copy(fileInStream, outStream);
+            outStream.closeEntry();
+            IOUtils.closeQuietly(pipeOut);
             // create request
             final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("file").path(urlEncodedFilePath).queryParam("parentRev", "" + fileMetaData.getRevision())
-                    .queryParam("isZip", "false");
+                    .queryParam("zip", "true");
 
-            response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
+            response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, zipInStream);
 
 
 
         } catch (IOException e) {
             logger.error("error sending file to server", e);
         } finally {
-            IOUtils.closeQuietly(fileStream);
+            IOUtils.closeQuietly(fileInStream);
+            IOUtils.closeQuietly(outStream);
+            IOUtils.closeQuietly(zipInStream);
+            IOUtils.closeQuietly(pipeOut);
+
         }
 
         if (response != null && response.getStatus() == 200) {
