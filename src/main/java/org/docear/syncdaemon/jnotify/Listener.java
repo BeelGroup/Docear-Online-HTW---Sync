@@ -78,6 +78,7 @@ public class Listener implements JNotifyListener {
 //            }
 //            IOUtils.closeQuietly(out);
 
+            sleep(20);
             try {
                 while (hash.equals("")) {
                     try {

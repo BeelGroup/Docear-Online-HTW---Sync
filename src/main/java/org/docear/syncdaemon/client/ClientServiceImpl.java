@@ -13,7 +13,6 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.typesafe.config.Config;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.docear.syncdaemon.NeedsConfig;
 import org.docear.syncdaemon.client.exceptions.NoFolderException;
@@ -91,15 +90,15 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             // get file stream
             final String absoluteFilePath = project.getRootPath() + fileMetaData.getPath();
             final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
-            //InputStream fileInStream = new FileInputStream(absoluteFilePath);
-            final byte[] bytes = FileUtils.readFileToByteArray(new File(absoluteFilePath));
-            logger.debug("upload => file size: "+ bytes.length);
+            InputStream fileInStream = new FileInputStream(absoluteFilePath);
+//            final byte[] bytes = FileUtils.readFileToByteArray(new File(absoluteFilePath));
+//            logger.debug("upload => file size: "+ bytes.length);
 
             // create request
             final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("file").path(urlEncodedFilePath).queryParam("parentRev", "" + fileMetaData.getRevision())
                     .queryParam("isZip", "false");
 
-            response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, bytes);
+            response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
 
 
 
