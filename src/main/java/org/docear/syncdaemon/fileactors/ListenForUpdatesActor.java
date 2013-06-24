@@ -130,7 +130,7 @@ public class ListenForUpdatesActor extends UntypedActor {
             this.getSelf().tell(new Messages.ListenAgain(), this.getSelf());
         } else if (message instanceof Messages.ListenAgain) {
             logger.debug(indexDbService.getProjects().toString());
-            ListenForUpdatesResponse restartResponse = clientService.listenForUpdates(user, indexDbService.getProjects(), this.getSelf());
+            ListenForUpdatesResponse restartResponse = clientService.listenForUpdates(user, indexDbService.getProjects(), null);
 
             if (restartResponse != null) {
                 this.getSelf().tell(restartResponse, this.getSelf());
