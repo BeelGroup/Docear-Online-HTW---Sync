@@ -54,13 +54,12 @@ public class Listener implements JNotifyListener {
         File f = new File(path, name);
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
-
         }
         boolean isDirectory = f.isDirectory();
         String hash = "";
-        if (!isDeleted) {
+        if (!isDeleted && !isDirectory) {
             try {
                 hash = hashAlgorithm.generate(f);
             } catch (IOException e) {
