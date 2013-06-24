@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory;
 import org.docear.syncdaemon.client.ClientService;
 import org.docear.syncdaemon.config.ConfigService;
 import org.docear.syncdaemon.fileactors.FileChangeActor;
+import org.docear.syncdaemon.fileactors.TempFileService;
 import org.docear.syncdaemon.fileactors.ListenForUpdatesActor;
 import org.docear.syncdaemon.fileactors.Messages;
 import org.docear.syncdaemon.indexdb.IndexDbService;
@@ -81,7 +82,7 @@ public class Daemon {
         fileChangeActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
-                return (UntypedActor) new FileChangeActor(service(ClientService.class), service(IndexDbService.class), getUser());
+                return (UntypedActor) new FileChangeActor(service(ClientService.class), service(IndexDbService.class), getUser(), service(TempFileService.class));
             }
         }), "fileChangeActor");
 

@@ -28,13 +28,16 @@ public class FileChangeActor extends UntypedActor {
     private IndexDbService indexDbService;
     private User user;
     private static final Map<String,Long> ResourceLastActionMap = new HashMap<String, Long>();
+    private final TempFileService tempFileService;
+    private final ActorSystem tempFileActorSystem;
 
-    public FileChangeActor(ClientService clientService, IndexDbService indexDbService, User user) {
+    public FileChangeActor(ClientService clientService, IndexDbService indexDbService, User user, TempFileService tempFileService) {
         this.clientService = clientService;
         this.indexDbService = indexDbService;
         this.user = user;
+        this.tempFileService = tempFileService;
+        this.tempFileActorSystem = ActorSystem.apply();
     }
-
 
     /**
      * To be implemented by concrete UntypedActor, this defines the behavior of the
@@ -46,6 +49,12 @@ public class FileChangeActor extends UntypedActor {
             final Messages.FileChangedLocally fileChangedLocally = (Messages.FileChangedLocally) message;
             final Project project = fileChangedLocally.getProject();
             final FileMetaData fileMetaData = fileChangedLocally.getFileMetaDataLocally();
+            
+            // if file is temp file that doesn't exist the defined amount of time, send the message again
+            if (tempFileService.isTempFile(fileMetaData)){
+            	tempFileActorSystem.scheduler().scheduleOnce(Duration.create(tempFileService.getTimeOutMillis(), TimeUnit.MILLISECONDS), this.getSelf(), message, tempFileActorSystem.dispatcher());
+            }
+            
             if(!ignoreResource(project,fileMetaData)) {
                 setResourceLastAction(fileChangedLocally.getProject(),fileChangedLocally.getFileMetaDataLocally());
                 fileChangedLocally(fileChangedLocally);
