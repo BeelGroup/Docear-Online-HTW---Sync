@@ -95,7 +95,7 @@ public class FileChangeActor extends UntypedActor {
     private boolean ignoreResource(Project project, FileMetaData fileMetaData) {
         final String resource = project.getRootPath()+"/"+fileMetaData.getPath();
 
-        return ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 1000;
+        return ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 5000;
     }
 
     private void fileChangedLocally(Messages.FileChangedLocally fileChangedLocally) throws IOException {
@@ -139,6 +139,8 @@ public class FileChangeActor extends UntypedActor {
                 }
                 //is locally updated file
                 else if (!fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())) {
+                    logger.debug("file: "+fileMetaDataFS.getPath());
+                    logger.debug("FS Hash: "+fileMetaDataFS.getHash()+"; DB hash: "+fileMetaDataDB.getHash());
                     //create meta data with correct revision
                     final FileMetaData correctMetaData = FileMetaData.file(fileMetaDataFS.getPath(), fileMetaDataFS.getHash(), project.getId(), false, fileMetaDataDB.getRevision());
                     //send request
@@ -152,7 +154,8 @@ public class FileChangeActor extends UntypedActor {
                         downloadAndPutFile(project, uploadResponse.getCurrentServerMetaData());
                     }
                     //save in index db
-                    indexDbService.save(uploadResponse.getCurrentServerMetaData());
+                    final FileMetaData mixedMeta = new FileMetaData(fileMetaDataFS.getPath(),fileMetaDataFS.getHash(),fileMetaDataFS.getProjectId(),false,false,uploadResponse.getCurrentServerMetaData().getRevision());
+                    indexDbService.save(mixedMeta);
                 }
             }
         }

@@ -28,7 +28,7 @@ public class Listener implements JNotifyListener {
     @Override
     public void fileCreated(final int wd, final String rootPath, final String name) {
         logger.debug("fileCreated {}/{}", rootPath, name);
-        sendFileChangedMessage(createFileMetaData(rootPath, name, false));
+//        sendFileChangedMessage(createFileMetaData(rootPath, name, false));
     }
 
     @Override
