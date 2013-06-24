@@ -2,7 +2,6 @@ package org.docear.syncdaemon.jnotify;
 
 import akka.actor.ActorRef;
 import net.contentobjects.jnotify.JNotifyListener;
-import org.apache.commons.io.IOUtils;
 import org.docear.syncdaemon.fileactors.Messages.FileChangedLocally;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.hashing.HashAlgorithm;
@@ -11,7 +10,8 @@ import org.docear.syncdaemon.projects.Project;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 public class Listener implements JNotifyListener {
     private static final Logger logger = LoggerFactory.getLogger(Listener.class);
@@ -66,17 +66,17 @@ public class Listener implements JNotifyListener {
         String hash = "";
         if (!isDeleted && !isDirectory) {
 
-            //wait until file is accessible
-            OutputStream out = null;
-            while(out == null) {
-                try {
-                    out = new FileOutputStream(f,true); // -> throws a FileNotFoundException
-                } catch (FileNotFoundException e) {
-                    out = null;
-                    sleep(100);
-                }
-            }
-            IOUtils.closeQuietly(out);
+//            //wait until file is accessible
+//            OutputStream out = null;
+//            while(out == null) {
+//                try {
+//                    out = new FileOutputStream(f,true); // -> throws a FileNotFoundException
+//                } catch (FileNotFoundException e) {
+//                    out = null;
+//                    sleep(100);
+//                }
+//            }
+//            IOUtils.closeQuietly(out);
 
             try {
                 hash = hashAlgorithm.generate(f);

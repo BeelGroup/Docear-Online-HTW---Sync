@@ -52,6 +52,7 @@ public class FileChangeActor extends UntypedActor {
             
             // if file is temp file that doesn't exist the defined amount of time, send the message again
             if (tempFileService.isTempFile(fileMetaData)){
+                logger.debug("temp file detected, rescheduling");
             	tempFileActorSystem.scheduler().scheduleOnce(Duration.create(tempFileService.getTimeOutMillis(), TimeUnit.MILLISECONDS), this.getSelf(), message, tempFileActorSystem.dispatcher());
             }
             
@@ -89,13 +90,13 @@ public class FileChangeActor extends UntypedActor {
 
     private void setResourceLastAction(Project project, FileMetaData fileMetaData) {
         final String resource = project.getRootPath()+"/"+fileMetaData.getPath();
-        ResourceLastActionMap.put(resource,System.currentTimeMillis());
+        ResourceLastActionMap.put(resource, System.currentTimeMillis());
     }
 
     private boolean ignoreResource(Project project, FileMetaData fileMetaData) {
         final String resource = project.getRootPath()+"/"+fileMetaData.getPath();
 
-        return ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 5000;
+        return ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 1000;
     }
 
     private void fileChangedLocally(Messages.FileChangedLocally fileChangedLocally) throws IOException {
@@ -111,8 +112,14 @@ public class FileChangeActor extends UntypedActor {
         else {
             final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
 
+            //check if equal with indexDB
+            if(fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())) {
+                //nothing to do here
+                return;
+            }
+
             //check if deleted (independent from file/folder
-            if ((fileMetaDataFS.isDeleted() && fileMetaDataDB != null && !fileMetaDataDB.isDeleted())) {
+            else if ((fileMetaDataFS.isDeleted() && fileMetaDataDB != null && !fileMetaDataDB.isDeleted())) {
                 final FileMetaData fileMetaDataServer = clientService.delete(user, project, fileMetaDataDB);
                 indexDbService.save(fileMetaDataServer);
             }
