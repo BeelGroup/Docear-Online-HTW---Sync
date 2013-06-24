@@ -13,12 +13,15 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.typesafe.config.Config;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.docear.syncdaemon.NeedsConfig;
 import org.docear.syncdaemon.client.exceptions.NoFolderException;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -41,6 +44,8 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     private Config config;
     private String serviceUrl;
     private Client restClient;
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientServiceImpl.class);
 
     private void intialize() {
 
@@ -81,36 +86,43 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
         }
 
         InputStream fileStream = null;
+        ClientResponse response = null;
         try {
             // get file stream
             final String absoluteFilePath = project.getRootPath() + fileMetaData.getPath();
             final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
-            InputStream fileInStream = new FileInputStream(absoluteFilePath);
+            //InputStream fileInStream = new FileInputStream(absoluteFilePath);
+            final byte[] bytes = FileUtils.readFileToByteArray(new File(absoluteFilePath));
+            logger.debug("upload => file size: "+ bytes.length);
 
             // create request
             final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("file").path(urlEncodedFilePath).queryParam("parentRev", "" + fileMetaData.getRevision())
                     .queryParam("isZip", "false");
 
-            ClientResponse response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
+            response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, bytes);
 
-            if (response.getStatus() == 200) {
-                final FileMetaData newFileMeta = serverMetadataToLocalFileMetaData(projectId, response.getEntity(String.class));
-                // check that file is no conflicted copy
-                if (newFileMeta.getPath().equals(fileMetaData.getPath())) {
-                    // equal path => no conflict
-                    return new UploadResponse(newFileMeta);
-                } else {
-                    // conflict!
-                    // get additional fileMetaData for original file
-                    final FileMetaData currentOriMetaData = getCurrentFileMetaData(user, fileMetaData);
-                    return new UploadResponse(currentOriMetaData, newFileMeta);
-                }
-            } else {
-                throw new RuntimeException("Problem uploading file! HTTP Code: " + response.getStatus());
-            }
 
+
+        } catch (IOException e) {
+            logger.error("error sending file to server", e);
         } finally {
             IOUtils.closeQuietly(fileStream);
+        }
+
+        if (response != null && response.getStatus() == 200) {
+            final FileMetaData newFileMeta = serverMetadataToLocalFileMetaData(projectId, response.getEntity(String.class));
+            // check that file is no conflicted copy
+            if (newFileMeta.getPath().equals(fileMetaData.getPath())) {
+                // equal path => no conflict
+                return new UploadResponse(newFileMeta);
+            } else {
+                // conflict!
+                // get additional fileMetaData for original file
+                final FileMetaData currentOriMetaData = getCurrentFileMetaData(user, fileMetaData);
+                return new UploadResponse(currentOriMetaData, newFileMeta);
+            }
+        } else {
+            throw new RuntimeException("Problem uploading file! HTTP Code: " + response.getStatus());
         }
     }
 

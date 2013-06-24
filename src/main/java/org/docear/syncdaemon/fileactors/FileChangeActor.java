@@ -113,7 +113,10 @@ public class FileChangeActor extends UntypedActor {
             final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
 
             //check if equal with indexDB
-            if(fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())) {
+            if(fileMetaDataDB != null &&
+                    ((fileMetaDataFS.isFolder() && fileMetaDataDB.isFolder()) ||
+                    (fileMetaDataFS.isDeleted() && fileMetaDataDB.isDeleted()) ||
+                    fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash()))) {
                 //nothing to do here
                 return;
             }

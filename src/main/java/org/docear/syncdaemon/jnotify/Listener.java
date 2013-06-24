@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class Listener implements JNotifyListener {
@@ -61,7 +62,6 @@ public class Listener implements JNotifyListener {
         File f = new File(path, name);
 
 
-
         boolean isDirectory = f.isDirectory();
         String hash = "";
         if (!isDeleted && !isDirectory) {
@@ -79,13 +79,19 @@ public class Listener implements JNotifyListener {
 //            IOUtils.closeQuietly(out);
 
             try {
-                hash = hashAlgorithm.generate(f);
+                while (hash.equals("")) {
+                    try {
+                        hash = hashAlgorithm.generate(f);
+                    } catch (FileNotFoundException e) {
+                        //do nothing
+                    }
+                }
             } catch (IOException e) {
                 logger.error("Couldn't create Hash for FileMetaData for file \"" + name + "\".", e);
             }
         }
         FileMetaData fileMetaData = new FileMetaData(
-                "/"+name,
+                "/" + name,
                 hash,
                 project.getId(),
                 isDirectory,
