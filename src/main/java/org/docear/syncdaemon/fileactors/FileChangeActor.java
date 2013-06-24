@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class FileChangeActor extends UntypedActor {
@@ -25,12 +27,14 @@ public class FileChangeActor extends UntypedActor {
     private ClientService clientService;
     private IndexDbService indexDbService;
     private User user;
+    private static final Map<String,Long> ResourceLastActionMap = new HashMap<String, Long>();
 
     public FileChangeActor(ClientService clientService, IndexDbService indexDbService, User user) {
         this.clientService = clientService;
         this.indexDbService = indexDbService;
         this.user = user;
     }
+
 
     /**
      * To be implemented by concrete UntypedActor, this defines the behavior of the
@@ -39,9 +43,21 @@ public class FileChangeActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof Messages.FileChangedLocally) {
-            fileChangedLocally((Messages.FileChangedLocally) message);
+            final Messages.FileChangedLocally fileChangedLocally = (Messages.FileChangedLocally) message;
+            final Project project = fileChangedLocally.getProject();
+            final FileMetaData fileMetaData = fileChangedLocally.getFileMetaDataLocally();
+            if(!ignoreResource(project,fileMetaData)) {
+                setResourceLastAction(fileChangedLocally.getProject(),fileChangedLocally.getFileMetaDataLocally());
+                fileChangedLocally(fileChangedLocally);
+            }
         } else if (message instanceof Messages.FileChangedOnServer) {
-            fileChangedOnServer((Messages.FileChangedOnServer) message);
+            final Messages.FileChangedOnServer fileChangedOnServer = (Messages.FileChangedOnServer) message;
+            final Project project = fileChangedOnServer.getProject();
+            final FileMetaData fileMetaData = fileChangedOnServer.getFileMetaDataOnServer();
+            if(!ignoreResource(project,fileMetaData)) {
+                setResourceLastAction(fileChangedOnServer.getProject(),fileChangedOnServer.getFileMetaDataOnServer());
+                fileChangedOnServer(fileChangedOnServer);
+            }
         } else if (message instanceof User) {
             this.user = (User) message;
         } else if (message instanceof Messages.ProjectDeleted) {
@@ -60,6 +76,17 @@ public class FileChangeActor extends UntypedActor {
 
             //TODO add project
         }
+    }
+
+    private void setResourceLastAction(Project project, FileMetaData fileMetaData) {
+        final String resource = project.getRootPath()+"/"+fileMetaData.getPath();
+        ResourceLastActionMap.put(resource,System.currentTimeMillis());
+    }
+
+    private boolean ignoreResource(Project project, FileMetaData fileMetaData) {
+        final String resource = project.getRootPath()+"/"+fileMetaData.getPath();
+
+        return ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 1000;
     }
 
     private void fileChangedLocally(Messages.FileChangedLocally fileChangedLocally) throws IOException {
@@ -181,11 +208,13 @@ public class FileChangeActor extends UntypedActor {
 
             final File file = getFile(project, fileMetaData);
 
+
             in = clientService.download(user, fileMetaData);
 
             if (in == null) {
                 logger.error("Could not find File online");
             } else {
+                file.getParentFile().mkdirs();
                 out = new FileOutputStream(file);
 
                 IOUtils.copy(in, out);
@@ -195,7 +224,7 @@ public class FileChangeActor extends UntypedActor {
             //scheduling a retry in 30 seconds
             final ActorSystem system = getContext().system();
             system.scheduler().scheduleOnce(Duration.apply(30, TimeUnit.SECONDS), getSelf(), new Messages.FileChangedOnServer(project, fileMetaData), system.dispatcher());
-            logger.warn("Could not delete file. It may be locked. Rescheduled event in 30 seconds.", e);
+            logger.warn("Could not download file. It may be locked. Rescheduled event in 30 seconds.", e);
         } finally {
             IOUtils.closeQuietly(in);
             IOUtils.closeQuietly(out);
