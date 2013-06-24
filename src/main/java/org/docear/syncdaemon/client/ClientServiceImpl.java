@@ -10,6 +10,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.typesafe.config.Config;
@@ -55,6 +56,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
         restClient = ApacheHttpClient.create();
 
+        restClient.addFilter(new LoggingFilter(System.out));
         //check for basic auth user
         try {
             final String basicAuthUser = config.getString("daemon.client.basicauth.username");
