@@ -103,7 +103,7 @@ public class FileChangeActor extends UntypedActor {
             final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
 
             //check if deleted (independent from file/folder
-            if ((fileMetaDataFS.isDeleted() && !fileMetaDataDB.isDeleted())) {
+            if ((fileMetaDataFS.isDeleted() && fileMetaDataDB != null && !fileMetaDataDB.isDeleted())) {
                 final FileMetaData fileMetaDataServer = clientService.delete(user, project, fileMetaDataDB);
                 indexDbService.save(fileMetaDataServer);
             }
