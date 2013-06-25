@@ -128,7 +128,7 @@ public class FileChangeActor extends UntypedActor {
             if (fileMetaDataDB != null &&
                     ((fileMetaDataFS.isFolder() && fileMetaDataDB.isFolder()) ||
                             (fileMetaDataFS.isDeleted() && fileMetaDataDB.isDeleted()) ||
-                            fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash()))) {
+                            (!fileMetaDataFS.getHash().isEmpty() && fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())))) {
                 logger.debug("fcl => equal, nothing to do");
                 return;
             }

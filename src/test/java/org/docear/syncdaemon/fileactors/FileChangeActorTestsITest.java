@@ -207,9 +207,10 @@ public class FileChangeActorTestsITest {
         final FileMetaData serverMeta = clientService.delete(user,project,fileMetaData);
         indexDbService.save(serverMeta);
 
-        fileOnFS.mkdir();
+        fileOnFS.mkdirs();
+        final FileMetaData newMeta = FileMetaData.fromFS(hashAlgorithm,projectId,project.getRootPath(),filePath,false);
 
-        final FileMetaData newMeta = FileMetaData.folder(projectId,filePath,false,serverMeta.getRevision());
+        //final FileMetaData newMeta = FileMetaData.folder(projectId,filePath,false,serverMeta.getRevision());
         new JavaTestKit(actorSystem) {{
             fileChangeActor.tell(new Messages.FileChangedLocally(project, newMeta), getRef());
             expectNoMsg();
