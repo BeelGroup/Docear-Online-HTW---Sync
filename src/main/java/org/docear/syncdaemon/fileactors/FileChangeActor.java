@@ -98,14 +98,13 @@ public class FileChangeActor extends UntypedActor {
     private boolean ignoreResource(Project project, FileMetaData fileMetaData) {
         final String resource = project.getRootPath() + "/" + fileMetaData.getPath();
         final boolean ignore = ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 1000;
-        logger.debug("ignoreResource => "+ignore);
+        logger.debug("ignoreResource => " + ignore);
         return ignore;
     }
 
     private void fileChangedLocally(Messages.FileChangedLocally fileChangedLocally) throws IOException {
         final Project project = fileChangedLocally.getProject();
-        final FileMetaData fileMetaDataFSReceived =fileChangedLocally.getFileMetaDataLocally();
-
+        final FileMetaData fileMetaDataFSReceived = fileChangedLocally.getFileMetaDataLocally();
 
 
         //validate not null and hash
@@ -114,8 +113,8 @@ public class FileChangeActor extends UntypedActor {
         }
         //something is present at location
         else {
-            final FileMetaData fileMetaDataFS = FileMetaData.fromFS(hashAlgorithm,project.getId(),project.getRootPath(),fileMetaDataFSReceived.getPath(),fileMetaDataFSReceived.isDeleted());
-            if(!fileMetaDataFS.getHash().equals(fileMetaDataFSReceived.getHash())) {
+            final FileMetaData fileMetaDataFS = FileMetaData.fromFS(hashAlgorithm, project.getId(), project.getRootPath(), fileMetaDataFSReceived.getPath(), fileMetaDataFSReceived.isDeleted());
+            if (!fileMetaDataFS.getHash().equals(fileMetaDataFSReceived.getHash())) {
                 logger.debug("fcl => change is outdated (different hash values)");
                 return;
             }
@@ -125,10 +124,9 @@ public class FileChangeActor extends UntypedActor {
             logger.debug("fcl => DB Meta: " + fileMetaDataDB);
 
             //check if equal with indexDB
-            if (fileMetaDataDB != null &&
-                    ((fileMetaDataFS.isFolder() && fileMetaDataDB.isFolder() && !fileMetaDataDB.isDeleted()) ||
-                            (fileMetaDataFS.isDeleted() && fileMetaDataDB.isDeleted()) ||
-                            (!fileMetaDataFS.getHash().isEmpty() && fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())))) {
+            if (((fileMetaDataFS.isFolder() && fileMetaDataDB != null && fileMetaDataDB.isFolder() && !fileMetaDataDB.isDeleted()) ||
+                    (fileMetaDataFS.isDeleted() && (fileMetaDataDB == null || fileMetaDataDB.isDeleted())) ||
+                    (!fileMetaDataFS.getHash().isEmpty() && fileMetaDataDB != null && fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())))) {
                 logger.debug("fcl => equal, nothing to do");
                 return;
             }
@@ -221,7 +219,7 @@ public class FileChangeActor extends UntypedActor {
         else {
             logger.debug("fcos => updated file");
             //check if hash is identical
-            if(fileMetaDataDB == null || !fileMetaDataDB.getHash().equals(fileMetaDataServer.getHash())) {
+            if (fileMetaDataDB == null || !fileMetaDataDB.getHash().equals(fileMetaDataServer.getHash())) {
                 logger.debug("fcos => hash different, downloading new file");
                 downloadAndPutFile(project, fileMetaDataServer);
             }
