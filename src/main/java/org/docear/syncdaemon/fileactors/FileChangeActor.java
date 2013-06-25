@@ -126,13 +126,16 @@ public class FileChangeActor extends UntypedActor {
 
             //check if deleted (independent from file/folder
             else if ((fileMetaDataFS.isDeleted() && fileMetaDataDB != null && !fileMetaDataDB.isDeleted())) {
+                logger.debug("fcl => file deleted, removing on server");
                 final FileMetaData fileMetaDataServer = clientService.delete(user, project, fileMetaDataDB);
                 indexDbService.save(fileMetaDataServer);
             }
             //check if folder
             else if (fileMetaDataFS.isFolder()) {
+                logger.debug("fcl => is folder");
                 //check that indexDB does not know a folder
                 if (fileMetaDataDB == null || !fileMetaDataDB.isFolder() || fileMetaDataDB.isDeleted()) {
+                    logger.debug("fcl => is new folder");
                     //upload the folder
                     final FileMetaData fileMetaDataServer = clientService.createFolder(user, project, fileMetaDataFS);
                     indexDbService.save(fileMetaDataServer);
@@ -144,16 +147,17 @@ public class FileChangeActor extends UntypedActor {
                     throw new IllegalArgumentException("No valid hash for FS file: "+fileMetaDataFS.getHash());
                 }
 
+
                 UploadResponse uploadResponse = null;
                 //look if locally new file
                 if (fileMetaDataDB == null || fileMetaDataDB.isDeleted()) {
+                    logger.debug("fcl => is new file");
                     //revision doesn't matter, because file is not present online (assumption)
                     uploadResponse = clientService.upload(user, project, fileMetaDataFS);
                 }
                 //is locally updated file
                 else if (!fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash())) {
-                    logger.debug("file: "+fileMetaDataFS.getPath());
-                    logger.debug("FS Hash: "+fileMetaDataFS.getHash()+"; DB hash: "+fileMetaDataDB.getHash());
+                    logger.debug("fcl => is updated file");
                     //create meta data with correct revision
                     final FileMetaData correctMetaData = FileMetaData.file(fileMetaDataFS.getPath(), fileMetaDataFS.getHash(), project.getId(), false, fileMetaDataDB.getRevision());
                     //send request
@@ -163,6 +167,7 @@ public class FileChangeActor extends UntypedActor {
                 if (uploadResponse != null) {
                     //Conflict?
                     if (uploadResponse.hasConflicts()) {
+                        logger.debug("fcl => conflict created at upload");
                         //download real file, conflicted will be triggered by update listener
                         downloadAndPutFile(project, uploadResponse.getCurrentServerMetaData());
                     }
@@ -180,20 +185,24 @@ public class FileChangeActor extends UntypedActor {
         final File file = getFile(project, fileMetaDataServer);
 
         final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataServer);
-        //final FileMetaData fileMetaDataFS = getFSMetadata(project, fileMetaDataServer);
+
+        logger.debug("fcos => DB Meta: "+fileMetaDataDB.toString());
+        logger.debug("fcos => SV Meta: "+fileMetaDataServer.toString());
 
         // check if server revision is already known
         if (fileMetaDataDB != null && fileMetaDataDB.getRevision() == fileMetaDataServer.getRevision()) {
-            // nothing to do;
+            logger.debug("fcos => file already up to date");
             return;
         }
         // check if file/folder has been deleted
         else if (fileMetaDataServer.isDeleted()) {
+            logger.debug("fcos => deleted on server, deleting locally");
             file.delete();
             indexDbService.save(fileMetaDataServer);
         }
         // check if new file is a folder
         else if (fileMetaDataServer.isFolder()) {
+            logger.debug("fcos => folder, creating folder tree");
             if (file.exists())
                 file.delete();
             file.mkdirs();
@@ -201,6 +210,7 @@ public class FileChangeActor extends UntypedActor {
         }
         // is an on the server existing file
         else {
+            logger.debug("fcos => updated file, downloading");
             downloadAndPutFile(project, fileMetaDataServer);
             indexDbService.save(fileMetaDataServer);
         }
@@ -229,17 +239,16 @@ public class FileChangeActor extends UntypedActor {
         InputStream in = null;
 //        OutputStream out = null;
         try {
-            deleteFile(project, fileMetaData);
-
+            //deleteFile(project, fileMetaData);
             final File file = getFile(project, fileMetaData);
 
-
+            logger.debug("downloadAndPutFile => local file: "+file.getAbsoluteFile());
             in = clientService.download(user, fileMetaData);
 
             if (in == null) {
                 logger.error("Could not find File online");
             } else {
-
+                logger.debug("downloadAndPutFile => downloading and writing");
                 //file.getParentFile().mkdirs();
                 FileUtils.copyInputStreamToFile(in,file);
 //                out = new FileOutputStream(file);
