@@ -111,7 +111,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 //            IOUtils.closeQuietly(pipeOut);
             // create request
             final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("file").path(urlEncodedFilePath).queryParam("parentRev", "" + fileMetaData.getRevision())
-                    .queryParam("zip", "false");
+                    .queryParam("zip", "false").queryParam("contentLength",file.length()+"");
 
             response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
 
