@@ -129,9 +129,14 @@ public final class FileMetaData {
     }
 
     private String normalizePath(String path) {
-        final String nPath = path.replace('\\','/');
+        String nPath = path.replace('\\','/');
+        nPath = nPath.replace("//","/");
+
+        if(nPath.length() > 1 && !nPath.startsWith("/")) {
+            nPath = "/"+nPath;
+        }
         if(nPath.endsWith("/") && nPath.length() > 1)
-            return nPath.substring(0, nPath.length()-1);
+            nPath = nPath.substring(0, nPath.length()-1);
         return nPath;
     }
 }
