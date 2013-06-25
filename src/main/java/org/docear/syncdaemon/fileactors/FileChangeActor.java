@@ -224,7 +224,7 @@ public class FileChangeActor extends UntypedActor {
 
     private void downloadAndPutFile(Project project, FileMetaData fileMetaData) throws IOException {
         InputStream in = null;
-        OutputStream out = null;
+//        OutputStream out = null;
         try {
             deleteFile(project, fileMetaData);
 
@@ -236,10 +236,12 @@ public class FileChangeActor extends UntypedActor {
             if (in == null) {
                 logger.error("Could not find File online");
             } else {
-                file.getParentFile().mkdirs();
-                out = new FileOutputStream(file);
 
-                IOUtils.copy(in, out);
+                //file.getParentFile().mkdirs();
+                FileUtils.copyInputStreamToFile(in,file);
+//                out = new FileOutputStream(file);
+//
+//                IOUtils.copy(in, out);
             }
         } catch (IOException e) {
             //problem deleting file. May be locked
@@ -249,7 +251,7 @@ public class FileChangeActor extends UntypedActor {
             logger.warn("Could not download file. It may be locked. Rescheduled event in 30 seconds.", e);
         } finally {
             IOUtils.closeQuietly(in);
-            IOUtils.closeQuietly(out);
+//            IOUtils.closeQuietly(out);
         }
     }
 

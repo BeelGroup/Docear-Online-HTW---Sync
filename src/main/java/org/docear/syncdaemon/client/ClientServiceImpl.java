@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -95,24 +94,26 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
         try {
             // get file stream
             final String absoluteFilePath = project.getRootPath() + fileMetaData.getPath();
+            final File file = new File(absoluteFilePath);
             final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
+
+           // byte[] bytes = IOUtils.toByteArray(file.toURI());
             fileInStream = new FileInputStream(absoluteFilePath);
 
 
-            pipeOut = new PipedOutputStream();
-            zipInStream = new PipedInputStream(pipeOut);
-            outStream = new ZipOutputStream(pipeOut);
-            outStream.putNextEntry(new ZipEntry("file"));
-
-
-            IOUtils.copy(fileInStream, outStream);
-            outStream.closeEntry();
-            IOUtils.closeQuietly(pipeOut);
+//            pipeOut = new PipedOutputStream();
+//            zipInStream = new PipedInputStream(pipeOut);
+//            outStream = new ZipOutputStream(pipeOut);
+//            outStream.putNextEntry(new ZipEntry("file"));
+//
+//            IOUtils.copyLarge(fileInStream, outStream);
+//            outStream.closeEntry();
+//            IOUtils.closeQuietly(pipeOut);
             // create request
             final WebResource request = preparedResource(fileMetaData.getProjectId(), user).path("file").path(urlEncodedFilePath).queryParam("parentRev", "" + fileMetaData.getRevision())
-                    .queryParam("zip", "true");
+                    .queryParam("zip", "false");
 
-            response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, zipInStream);
+            response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
 
 
 
