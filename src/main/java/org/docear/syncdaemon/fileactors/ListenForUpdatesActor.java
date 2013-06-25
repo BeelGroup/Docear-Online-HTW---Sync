@@ -50,6 +50,7 @@ public class ListenForUpdatesActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof Messages.StartListening) {
+        	logger.debug("Start listening for projects");
             Messages.StartListening startListing = (Messages.StartListening) message;
             Map<String, Long> projectIdRevisionMap = startListing.getProjectIdRevisionMap();
             if (projectIdRevisionMap == null) {
@@ -74,6 +75,7 @@ public class ListenForUpdatesActor extends UntypedActor {
                     List<FileMetaData> fmds = delta.getServerMetaDatas();
 
                     for (FileMetaData fmd : fmds) {
+                    	logger.debug("Updated file path=" + fmd.getPath() + " hash=" + fmd.getHash());
                         FileChangedOnServer changeMessage = new FileChangedOnServer(localProject, fmd);
                         fileChangeActor.tell(changeMessage, this.getSelf());
                     }
@@ -99,6 +101,7 @@ public class ListenForUpdatesActor extends UntypedActor {
                     List<FileMetaData> fmds = delta.getServerMetaDatas();
 
                     for (FileMetaData fmd : fmds) {
+                    	logger.debug("New file in new project path=" + fmd.getPath() + " hash=" + fmd.getHash());
                         FileChangedOnServer changeMessage = new FileChangedOnServer(localProject, fmd);
                         fileChangeActor.tell(changeMessage, this.getSelf());
                     }
@@ -122,14 +125,13 @@ public class ListenForUpdatesActor extends UntypedActor {
 
                     // remove project from projectIdRevisonMap for next iteration
                     this.indexDbService.deleteProject(projectId);
-
                 }
             }
 
             // listen again
             this.getSelf().tell(new Messages.ListenAgain(), this.getSelf());
         } else if (message instanceof Messages.ListenAgain) {
-            logger.debug(indexDbService.getProjects().toString());
+            logger.debug("Listening again for projectId " + indexDbService.getProjects().toString());
             ListenForUpdatesResponse restartResponse = clientService.listenForUpdates(user, indexDbService.getProjects(), null);
 
             if (restartResponse != null) {
