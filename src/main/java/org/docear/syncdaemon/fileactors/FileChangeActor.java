@@ -104,15 +104,22 @@ public class FileChangeActor extends UntypedActor {
 
     private void fileChangedLocally(Messages.FileChangedLocally fileChangedLocally) throws IOException {
         final Project project = fileChangedLocally.getProject();
-        final FileMetaData fileMetaDataFS = fileChangedLocally.getFileMetaDataLocally();
+        final FileMetaData fileMetaDataFSReceived =fileChangedLocally.getFileMetaDataLocally();
+
 
 
         //validate not null and hash
-        if (fileMetaDataFS == null) {
+        if (fileMetaDataFSReceived == null) {
             throw new NullPointerException("fileMetaDataFS cannot be null");
         }
         //something is present at location
         else {
+            final FileMetaData fileMetaDataFS = FileMetaData.fromFS(hashAlgorithm,project.getId(),project.getRootPath(),fileMetaDataFSReceived.getPath(),fileMetaDataFSReceived.isDeleted());
+            if(!fileMetaDataFS.getHash().equals(fileMetaDataFSReceived.getHash())) {
+                logger.debug("fcl => change is outdated (different hash values)");
+                return;
+            }
+
             logger.debug("fcl => FS Meta: " + fileMetaDataFS.toString());
             final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
             logger.debug("fcl => DB Meta: " + fileMetaDataDB);

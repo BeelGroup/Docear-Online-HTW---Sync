@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 
-import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +61,7 @@ public class Listener implements JNotifyListener {
 
     private void scheduleChange(String rootPath, String filename, boolean isDeleted) {
         final SendChangeRunnable sendChangeRunnable = new SendChangeRunnable(project,recipient,hashAlgorithm,rootPath,filename,isDeleted);
-        final Cancellable cancellable = system.scheduler().scheduleOnce(Duration.apply(1, TimeUnit.SECONDS), sendChangeRunnable,system.dispatcher());
+        final Cancellable cancellable = system.scheduler().scheduleOnce(Duration.apply(2, TimeUnit.SECONDS), sendChangeRunnable,system.dispatcher());
         putInCancellableMap(rootPath,filename,cancellable);
     }
 
@@ -113,55 +112,12 @@ public class Listener implements JNotifyListener {
         @Override
         public void run() {
 
-            final FileMetaData fileMetaData = createFileMetaData(rootPath,filename,isDeleted);
+            final FileMetaData fileMetaData = FileMetaData.fromFS(hashAlgorithm,project.getId(),rootPath,filename,isDeleted);
             logger.debug("scr => getting meta data: "+fileMetaData);
             final FileChangedLocally message = new FileChangedLocally(this.project, fileMetaData);
             logger.debug("scr => sending file change to recipient. Filename: "+filename);
             recipient.tell(message, recipient);
         }
 
-        private FileMetaData createFileMetaData(final String path, final String name, final boolean isDeleted) {
-            File f = new File(path, name);
-
-
-            boolean isDirectory = f.isDirectory();
-            String hash = "";
-            if (!isDeleted && !isDirectory) {
-
-                //wait until file is accessible
-//                OutputStream out = null;
-//                while(out == null) {
-//                    try {
-//                        out = new FileOutputStream(f,true); // -> throws a FileNotFoundException
-//                    } catch (FileNotFoundException e) {
-//                        out = null;
-//                        sleep(100);
-//                    }
-//                }
-//                IOUtils.closeQuietly(out);
-
-//                sleep(20);
-                try {
-                    while (hash.equals("")) {
-                        try {
-                            hash = hashAlgorithm.generate(f);
-                        } catch (FileNotFoundException e) {
-                            //do nothing
-                        }
-                    }
-                } catch (IOException e) {
-                    logger.error("Couldn't create Hash for FileMetaData for file \"" + name + "\".", e);
-                }
-            }
-            FileMetaData fileMetaData = new FileMetaData(
-                    "/" + name,
-                    hash,
-                    project.getId(),
-                    isDirectory,
-                    isDeleted,
-                    -1);
-            logger.debug(fileMetaData.toString());
-            return fileMetaData;
-        }
     }
 }

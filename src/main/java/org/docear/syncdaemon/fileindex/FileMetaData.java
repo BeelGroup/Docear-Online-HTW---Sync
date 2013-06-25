@@ -1,6 +1,15 @@
 package org.docear.syncdaemon.fileindex;
 
+import org.docear.syncdaemon.hashing.HashAlgorithm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 public final class FileMetaData {
+    final static Logger logger = LoggerFactory.getLogger(FileMetaData.class);
 	// path always starts with "/"
     final String path;
     final String hash;
@@ -31,6 +40,37 @@ public final class FileMetaData {
 
     public static FileMetaData newFile(String path, String hash, String projectId) {
         return new FileMetaData(path, hash, projectId, false, false, 0);
+    }
+
+    public static FileMetaData fromFS(HashAlgorithm hashAlgorithm, String projectId, String path, String name, boolean isDeleted) {
+        File f = new File(path, name);
+
+
+        boolean isDirectory = f.isDirectory();
+        String hash = "";
+        if (!isDeleted && !isDirectory) {
+
+            try {
+                while (hash.equals("")) {
+                    try {
+                        hash = hashAlgorithm.generate(f);
+                    } catch (FileNotFoundException e) {
+                        //do nothing
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Couldn't create Hash for FileMetaData for file \"" + name + "\".", e);
+            }
+        }
+        FileMetaData fileMetaData = new FileMetaData(
+                "/" + name,
+                hash,
+                projectId,
+                isDirectory,
+                isDeleted,
+                -1);
+        logger.debug(fileMetaData.toString());
+        return fileMetaData;
     }
     
     public String getPath() {
