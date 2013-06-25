@@ -104,20 +104,23 @@ public class FileChangeActor extends UntypedActor {
         final FileMetaData fileMetaDataFS = fileChangedLocally.getFileMetaDataLocally();
 
 
+
         //validate not null and hash
         if (fileMetaDataFS == null) {
             throw new NullPointerException("fileMetaDataFS cannot be null");
         }
         //something is present at location
         else {
+            logger.debug("fcl => FS Meta: "+ fileMetaDataFS.toString());
             final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
-
+            if(fileMetaDataDB != null)
+                logger.debug("fcl => DB Meta: "+ fileMetaDataDB.toString());
             //check if equal with indexDB
             if(fileMetaDataDB != null &&
                     ((fileMetaDataFS.isFolder() && fileMetaDataDB.isFolder()) ||
                     (fileMetaDataFS.isDeleted() && fileMetaDataDB.isDeleted()) ||
                     fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash()))) {
-                //nothing to do here
+                logger.debug("fcl => equal, nothing to do");
                 return;
             }
 
