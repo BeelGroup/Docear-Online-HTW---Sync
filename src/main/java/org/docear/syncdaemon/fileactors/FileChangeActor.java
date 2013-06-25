@@ -15,21 +15,23 @@ import org.docear.syncdaemon.users.User;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class FileChangeActor extends UntypedActor {
 
+    private static final Map<String, Long> ResourceLastActionMap = new HashMap<String, Long>();
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(FileChangeActor.class);
     private final HashAlgorithm hashAlgorithm = new SHA2();
+    private final TempFileService tempFileService;
+    private final ActorSystem tempFileActorSystem;
     private ClientService clientService;
     private IndexDbService indexDbService;
     private User user;
-    private static final Map<String,Long> ResourceLastActionMap = new HashMap<String, Long>();
-    private final TempFileService tempFileService;
-    private final ActorSystem tempFileActorSystem;
 
     public FileChangeActor(ClientService clientService, IndexDbService indexDbService, User user, TempFileService tempFileService) {
         this.clientService = clientService;
@@ -49,23 +51,23 @@ public class FileChangeActor extends UntypedActor {
             final Messages.FileChangedLocally fileChangedLocally = (Messages.FileChangedLocally) message;
             final Project project = fileChangedLocally.getProject();
             final FileMetaData fileMetaData = fileChangedLocally.getFileMetaDataLocally();
-            
+
             // if file is temp file that doesn't exist the defined amount of time, send the message again
-            if (tempFileService.isTempFile(fileMetaData)){
+            if (tempFileService.isTempFile(fileMetaData)) {
                 logger.debug("temp file detected, rescheduling");
-            	tempFileActorSystem.scheduler().scheduleOnce(Duration.create(tempFileService.getTimeOutMillis(), TimeUnit.MILLISECONDS), this.getSelf(), message, tempFileActorSystem.dispatcher());
+                tempFileActorSystem.scheduler().scheduleOnce(Duration.create(tempFileService.getTimeOutMillis(), TimeUnit.MILLISECONDS), this.getSelf(), message, tempFileActorSystem.dispatcher());
             }
-            
-            if(!ignoreResource(project,fileMetaData)) {
-                setResourceLastAction(fileChangedLocally.getProject(),fileChangedLocally.getFileMetaDataLocally());
+
+            if (!ignoreResource(project, fileMetaData)) {
+                setResourceLastAction(fileChangedLocally.getProject(), fileChangedLocally.getFileMetaDataLocally());
                 fileChangedLocally(fileChangedLocally);
             }
         } else if (message instanceof Messages.FileChangedOnServer) {
             final Messages.FileChangedOnServer fileChangedOnServer = (Messages.FileChangedOnServer) message;
             final Project project = fileChangedOnServer.getProject();
             final FileMetaData fileMetaData = fileChangedOnServer.getFileMetaDataOnServer();
-            if(!ignoreResource(project,fileMetaData)) {
-                setResourceLastAction(fileChangedOnServer.getProject(),fileChangedOnServer.getFileMetaDataOnServer());
+            if (!ignoreResource(project, fileMetaData)) {
+                setResourceLastAction(fileChangedOnServer.getProject(), fileChangedOnServer.getFileMetaDataOnServer());
                 fileChangedOnServer(fileChangedOnServer);
             }
         } else if (message instanceof User) {
@@ -89,20 +91,20 @@ public class FileChangeActor extends UntypedActor {
     }
 
     private void setResourceLastAction(Project project, FileMetaData fileMetaData) {
-        final String resource = project.getRootPath()+"/"+fileMetaData.getPath();
+        final String resource = project.getRootPath() + "/" + fileMetaData.getPath();
         ResourceLastActionMap.put(resource, System.currentTimeMillis());
     }
 
     private boolean ignoreResource(Project project, FileMetaData fileMetaData) {
-        final String resource = project.getRootPath()+"/"+fileMetaData.getPath();
-
-        return ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 1000;
+        final String resource = project.getRootPath() + "/" + fileMetaData.getPath();
+        final boolean ignore = ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 1000;
+        logger.debug("ignoreResource => "+ignore);
+        return ignore;
     }
 
     private void fileChangedLocally(Messages.FileChangedLocally fileChangedLocally) throws IOException {
         final Project project = fileChangedLocally.getProject();
         final FileMetaData fileMetaDataFS = fileChangedLocally.getFileMetaDataLocally();
-
 
 
         //validate not null and hash
@@ -111,15 +113,15 @@ public class FileChangeActor extends UntypedActor {
         }
         //something is present at location
         else {
-            logger.debug("fcl => FS Meta: "+ fileMetaDataFS.toString());
+            logger.debug("fcl => FS Meta: " + fileMetaDataFS.toString());
             final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
-            if(fileMetaDataDB != null)
-                logger.debug("fcl => DB Meta: "+ fileMetaDataDB.toString());
+            logger.debug("fcl => DB Meta: " + fileMetaDataDB);
+
             //check if equal with indexDB
-            if(fileMetaDataDB != null &&
+            if (fileMetaDataDB != null &&
                     ((fileMetaDataFS.isFolder() && fileMetaDataDB.isFolder()) ||
-                    (fileMetaDataFS.isDeleted() && fileMetaDataDB.isDeleted()) ||
-                    fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash()))) {
+                            (fileMetaDataFS.isDeleted() && fileMetaDataDB.isDeleted()) ||
+                            fileMetaDataFS.getHash().equals(fileMetaDataDB.getHash()))) {
                 logger.debug("fcl => equal, nothing to do");
                 return;
             }
@@ -144,7 +146,7 @@ public class FileChangeActor extends UntypedActor {
             //is existing file
             else {
                 if (!hashAlgorithm.isValidHash(fileMetaDataFS.getHash())) {
-                    throw new IllegalArgumentException("No valid hash for FS file: "+fileMetaDataFS.getHash());
+                    throw new IllegalArgumentException("No valid hash for FS file: " + fileMetaDataFS.getHash());
                 }
 
 
@@ -172,7 +174,7 @@ public class FileChangeActor extends UntypedActor {
                         downloadAndPutFile(project, uploadResponse.getCurrentServerMetaData());
                     }
                     //save in index db
-                    final FileMetaData mixedMeta = new FileMetaData(fileMetaDataFS.getPath(),fileMetaDataFS.getHash(),fileMetaDataFS.getProjectId(),false,false,uploadResponse.getCurrentServerMetaData().getRevision());
+                    final FileMetaData mixedMeta = new FileMetaData(fileMetaDataFS.getPath(), fileMetaDataFS.getHash(), fileMetaDataFS.getProjectId(), false, false, uploadResponse.getCurrentServerMetaData().getRevision());
                     indexDbService.save(mixedMeta);
                 }
             }
@@ -186,8 +188,8 @@ public class FileChangeActor extends UntypedActor {
 
         final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataServer);
 
-        logger.debug("fcos => DB Meta: "+fileMetaDataDB.toString());
-        logger.debug("fcos => SV Meta: "+fileMetaDataServer.toString());
+        logger.debug("fcos => DB Meta: " + fileMetaDataDB);
+        logger.debug("fcos => SV Meta: " + fileMetaDataServer);
 
         // check if server revision is already known
         if (fileMetaDataDB != null && fileMetaDataDB.getRevision() == fileMetaDataServer.getRevision()) {
@@ -210,8 +212,14 @@ public class FileChangeActor extends UntypedActor {
         }
         // is an on the server existing file
         else {
-            logger.debug("fcos => updated file, downloading");
-            downloadAndPutFile(project, fileMetaDataServer);
+            logger.debug("fcos => updated file");
+            //check if hash is identical
+            if(fileMetaDataDB == null || !fileMetaDataDB.getHash().equals(fileMetaDataServer.getHash())) {
+                logger.debug("fcos => hash different, downloading new file");
+                downloadAndPutFile(project, fileMetaDataServer);
+            }
+
+            logger.debug("fcos => saving new meta data");
             indexDbService.save(fileMetaDataServer);
         }
     }
@@ -242,7 +250,7 @@ public class FileChangeActor extends UntypedActor {
             //deleteFile(project, fileMetaData);
             final File file = getFile(project, fileMetaData);
 
-            logger.debug("downloadAndPutFile => local file: "+file.getAbsoluteFile());
+            logger.debug("downloadAndPutFile => local file: " + file.getAbsoluteFile());
             in = clientService.download(user, fileMetaData);
 
             if (in == null) {
@@ -250,7 +258,7 @@ public class FileChangeActor extends UntypedActor {
             } else {
                 logger.debug("downloadAndPutFile => downloading and writing");
                 //file.getParentFile().mkdirs();
-                FileUtils.copyInputStreamToFile(in,file);
+                FileUtils.copyInputStreamToFile(in, file);
 //                out = new FileOutputStream(file);
 //
 //                IOUtils.copy(in, out);
