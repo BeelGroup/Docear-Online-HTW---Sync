@@ -37,42 +37,33 @@ public class Listener implements JNotifyListener {
     @Override
     public void fileCreated(final int wd, final String rootPath, final String name) {
         logger.debug("fileCreated {}/{}", rootPath, name);
-        final SendChangeRunnable sendChangeRunnable = new SendChangeRunnable(project,recipient,hashAlgorithm,rootPath,name,false);
-        final Cancellable cancellable = system.scheduler().scheduleOnce(Duration.apply(1, TimeUnit.SECONDS), sendChangeRunnable,system.dispatcher());
-        putInCancellableMap(rootPath,name,cancellable);
-        //sendFileChangedMessage(createFileMetaData(rootPath, name, false));
+        scheduleChange(rootPath,name,false);
 
     }
 
     @Override
     public void fileDeleted(final int wd, final String rootPath, final String name) {
         logger.debug("fileDeleted {}/{}", rootPath, name);
-        final SendChangeRunnable sendChangeRunnable = new SendChangeRunnable(project,recipient,hashAlgorithm,rootPath,name,true);
-        final Cancellable cancellable = system.scheduler().scheduleOnce(Duration.apply(1, TimeUnit.SECONDS), sendChangeRunnable,system.dispatcher());
-        putInCancellableMap(rootPath,name,cancellable);
-        //sendFileChangedMessage(createFileMetaData(rootPath, name, true));
+        scheduleChange(rootPath,name,true);
     }
 
     @Override
     public void fileModified(final int wd, final String rootPath, final String name) {
         logger.debug("fileModified {}/{}", rootPath, name);
-        final SendChangeRunnable sendChangeRunnable = new SendChangeRunnable(project,recipient,hashAlgorithm,rootPath,name,false);
-        final Cancellable cancellable = system.scheduler().scheduleOnce(Duration.apply(1, TimeUnit.SECONDS), sendChangeRunnable,system.dispatcher());
-        putInCancellableMap(rootPath,name,cancellable);
-//        sendFileChangedMessage(createFileMetaData(rootPath, name, false));
+        scheduleChange(rootPath,name,false);
     }
 
     @Override
     public void fileRenamed(final int wd, final String rootPath, final String oldName, final String newName) {
         logger.debug("fileRenamed rootpath={}, oldName={}, newName={}", rootPath, oldName, newName);
-        final SendChangeRunnable sendChangeRunnable = new SendChangeRunnable(project,recipient,hashAlgorithm,rootPath,oldName,false);
+        scheduleChange(rootPath,oldName,true);
+        scheduleChange(rootPath,newName,false);
+    }
+
+    private void scheduleChange(String rootPath, String filename, boolean isDeleted) {
+        final SendChangeRunnable sendChangeRunnable = new SendChangeRunnable(project,recipient,hashAlgorithm,rootPath,filename,isDeleted);
         final Cancellable cancellable = system.scheduler().scheduleOnce(Duration.apply(1, TimeUnit.SECONDS), sendChangeRunnable,system.dispatcher());
-        putInCancellableMap(rootPath,oldName,cancellable);
-        final SendChangeRunnable sendChangeRunnable2 = new SendChangeRunnable(project,recipient,hashAlgorithm,rootPath,newName,false);
-        final Cancellable cancellable2 = system.scheduler().scheduleOnce(Duration.apply(1, TimeUnit.SECONDS), sendChangeRunnable2,system.dispatcher());
-        putInCancellableMap(rootPath,newName,cancellable2);
-//        sendFileChangedMessage(createFileMetaData(rootPath, oldName, true));
-//        sendFileChangedMessage(createFileMetaData(rootPath, newName, false));
+        putInCancellableMap(rootPath,filename,cancellable);
     }
 
     public void putInCancellableMap(String rootPath, String path, Cancellable cancellable) {
@@ -125,7 +116,7 @@ public class Listener implements JNotifyListener {
             final FileMetaData fileMetaData = createFileMetaData(rootPath,filename,isDeleted);
             logger.debug("scr => getting meta data: "+fileMetaData);
             final FileChangedLocally message = new FileChangedLocally(this.project, fileMetaData);
-            logger.debug("scr => sending");
+            logger.debug("scr => sending file change to recipient. Filename: "+filename);
             recipient.tell(message, recipient);
         }
 
