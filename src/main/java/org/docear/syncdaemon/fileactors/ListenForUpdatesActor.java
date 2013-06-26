@@ -70,7 +70,7 @@ public class ListenForUpdatesActor extends UntypedActor {
 
             if (updatedProjects != null && updatedProjects.size() > 0) {
                 for (Entry<String, Long> entry : updatedProjects.entrySet()) {
-                    Project localProject = getProject(entry.getKey());//TODO rootpath
+                    Project localProject = getProject(entry.getKey());
                     DeltaResponse delta = clientService.delta(user, localProject.getId(), localProject.getRevision());
                     List<FileMetaData> fmds = delta.getServerMetaDatas();
 

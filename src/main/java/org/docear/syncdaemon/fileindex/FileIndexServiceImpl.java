@@ -52,8 +52,7 @@ public class FileIndexServiceImpl extends UntypedActor implements
             if (localRev != project.getRevision()) {
                 List<FileMetaData> fmdsFromScan = FileReceiver.receiveFiles(project);
                 List<FileMetaData> fmdsFromIndexDb = indexDbService.getFileMetaDatas(project.getId());
-                
-                // TODO user credentials required to use clientService
+
                 for (FileMetaData fmdFromScan : fmdsFromScan) {
                 	FileMetaData match = null;
                 	for (FileMetaData fmdFromIndexDb: fmdsFromIndexDb){

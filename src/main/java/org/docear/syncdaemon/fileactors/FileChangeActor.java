@@ -84,9 +84,6 @@ public class FileChangeActor extends UntypedActor {
 
             // create root dir in FS
             FileUtils.forceMkdir(new File(projectAdded.getProject().getRootPath()));
-
-
-            //TODO add project
         }
     }
 
@@ -226,25 +223,6 @@ public class FileChangeActor extends UntypedActor {
 
             logger.debug("fcos => saving new meta data");
             indexDbService.save(fileMetaDataServer);
-        }
-    }
-
-    private FileMetaData getFSMetadata(Project project, FileMetaData fileMetaData) throws IOException {
-        final String path = project.getRootPath() + File.separator + fileMetaData.getPath();
-        final File file = new File(path);
-        if (file.exists()) {
-            final String hash = hashAlgorithm.generate(file);
-
-            return new FileMetaData(fileMetaData.getPath(), hash, project.getId(), fileMetaData.isFolder(), fileMetaData.isDeleted(), fileMetaData.getRevision());
-        } else {
-            return null;
-        }
-    }
-
-    private void deleteFile(Project project, FileMetaData fileMetaData) throws IOException {
-        final File file = getFile(project, fileMetaData);
-        if (file.exists() && !file.delete()) {
-            throw new IOException("could not delete file");
         }
     }
 
