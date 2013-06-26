@@ -21,15 +21,15 @@ public class Messages {
     }
 
     public static final class FileChangedLocally extends FileChanged {
-        private final FileMetaData fileMetaDataLocally;
+        private final String path;
 
-        public FileChangedLocally(Project project, FileMetaData fileMetaData) {
+        public FileChangedLocally(Project project, String path) {
             super(project);
-            this.fileMetaDataLocally = fileMetaData;
+            this.path = path;
         }
 
-        public FileMetaData getFileMetaDataLocally() {
-            return fileMetaDataLocally;
+        public String getPath() {
+            return path;
         }
     }
 

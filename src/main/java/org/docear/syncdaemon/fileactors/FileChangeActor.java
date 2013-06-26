@@ -50,26 +50,26 @@ public class FileChangeActor extends UntypedActor {
         if (message instanceof Messages.FileChangedLocally) {
             final Messages.FileChangedLocally fileChangedLocally = (Messages.FileChangedLocally) message;
             final Project project = fileChangedLocally.getProject();
-            final FileMetaData fileMetaData = fileChangedLocally.getFileMetaDataLocally();
+            final String path = fileChangedLocally.getPath();
 
             // if file is temp file that doesn't exist the defined amount of time, send the message again
-            if (tempFileService.isTempFile(fileMetaData)) {
+            if (tempFileService.isTempFile(path)) {
                 logger.debug("temp file detected, rescheduling");
                 tempFileActorSystem.scheduler().scheduleOnce(Duration.create(tempFileService.getTimeOutMillis(), TimeUnit.MILLISECONDS), this.getSelf(), message, tempFileActorSystem.dispatcher());
             }
 
-            if (!ignoreResource(project, fileMetaData)) {
-                setResourceLastAction(fileChangedLocally.getProject(), fileChangedLocally.getFileMetaDataLocally());
+            if (!ignoreResource(project, path)) {
+                setResourceLastAction(fileChangedLocally.getProject(), path);
                 fileChangedLocally(fileChangedLocally);
             }
         } else if (message instanceof Messages.FileChangedOnServer) {
             final Messages.FileChangedOnServer fileChangedOnServer = (Messages.FileChangedOnServer) message;
             final Project project = fileChangedOnServer.getProject();
             final FileMetaData fileMetaData = fileChangedOnServer.getFileMetaDataOnServer();
-            if (!ignoreResource(project, fileMetaData)) {
-                setResourceLastAction(fileChangedOnServer.getProject(), fileChangedOnServer.getFileMetaDataOnServer());
-                fileChangedOnServer(fileChangedOnServer);
-            }
+
+            setResourceLastAction(project, fileMetaData.getPath());
+            fileChangedOnServer(fileChangedOnServer);
+
         } else if (message instanceof User) {
             this.user = (User) message;
         } else if (message instanceof Messages.ProjectDeleted) {
@@ -87,13 +87,13 @@ public class FileChangeActor extends UntypedActor {
         }
     }
 
-    private void setResourceLastAction(Project project, FileMetaData fileMetaData) {
-        final String resource = project.getRootPath() + "/" + fileMetaData.getPath();
+    private void setResourceLastAction(Project project, String path) {
+        final String resource = project.getRootPath() + "/" + path;
         ResourceLastActionMap.put(resource, System.currentTimeMillis());
     }
 
-    private boolean ignoreResource(Project project, FileMetaData fileMetaData) {
-        final String resource = project.getRootPath() + "/" + fileMetaData.getPath();
+    private boolean ignoreResource(Project project, String path) {
+        final String resource = project.getRootPath() + "/" + path;
         final boolean ignore = ResourceLastActionMap.containsKey(resource) && (System.currentTimeMillis() - ResourceLastActionMap.get(resource)) < 1000;
         logger.debug("ignoreResource => " + ignore);
         return ignore;
@@ -101,22 +101,18 @@ public class FileChangeActor extends UntypedActor {
 
     private void fileChangedLocally(Messages.FileChangedLocally fileChangedLocally) throws IOException {
         final Project project = fileChangedLocally.getProject();
-        final FileMetaData fileMetaDataFSReceived = fileChangedLocally.getFileMetaDataLocally();
+        final String filePath = fileChangedLocally.getPath();
 
 
-        //validate not null and hash
-        if (fileMetaDataFSReceived == null) {
-            throw new NullPointerException("fileMetaDataFS cannot be null");
+        //validate not null
+        if (filePath == null) {
+            throw new NullPointerException("file path cannot be null");
         }
         //something is present at location
         else {
-            final FileMetaData fileMetaDataFS = FileMetaData.fromFS(hashAlgorithm, project.getId(), project.getRootPath(), fileMetaDataFSReceived.getPath(), fileMetaDataFSReceived.isDeleted());
-            if (!fileMetaDataFS.getHash().equals(fileMetaDataFSReceived.getHash())) {
-                logger.debug("fcl => change is outdated (different hash values)");
-                return;
-            }
+            final FileMetaData fileMetaDataFS = FileMetaData.fromFS(hashAlgorithm, project.getId(), project.getRootPath(), filePath);
 
-            logger.debug("fcl => FS Meta: " + fileMetaDataFS.toString());
+            logger.debug("fcl => FS Meta: " + fileMetaDataFS);
             final FileMetaData fileMetaDataDB = indexDbService.getFileMetaData(fileMetaDataFS);
             logger.debug("fcl => DB Meta: " + fileMetaDataDB);
 

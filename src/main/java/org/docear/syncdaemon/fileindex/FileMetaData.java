@@ -42,10 +42,10 @@ public final class FileMetaData {
         return new FileMetaData(path, hash, projectId, false, false, 0);
     }
 
-    public static FileMetaData fromFS(HashAlgorithm hashAlgorithm, String projectId, String path, String name, boolean isDeleted) {
+    public static FileMetaData fromFS(HashAlgorithm hashAlgorithm, String projectId, String path, String name) {
         File f = new File(path, name);
 
-
+        boolean isDeleted = !f.exists();
         boolean isDirectory = f.isDirectory();
         String hash = "";
         if (!isDeleted && !isDirectory) {

@@ -63,7 +63,7 @@ public class FileIndexServiceImpl extends UntypedActor implements
                 	}
                 
                 	if (match == null || fmdFromScan.isChanged(match)) {
-                		sendFileChangedMessage(fmdFromScan);
+                		sendFileChangedMessage(fmdFromScan.getPath());
                 	}
                 	
                 	if (match != null){
@@ -72,7 +72,7 @@ public class FileIndexServiceImpl extends UntypedActor implements
                 }
                 
                 for (FileMetaData fmdFromIndexDb : fmdsFromIndexDb) {
-                	sendFileChangedMessage(fmdFromIndexDb);
+                	sendFileChangedMessage(fmdFromIndexDb.getPath());
                 }
             }
         } catch (PersistenceException e) {
@@ -89,8 +89,8 @@ public class FileIndexServiceImpl extends UntypedActor implements
         }
     }
 
-    private void sendFileChangedMessage(final FileMetaData fmd) {
-    	final FileChangedLocally message = new FileChangedLocally(this.project, fmd);
+    private void sendFileChangedMessage(final String path) {
+    	final FileChangedLocally message = new FileChangedLocally(this.project, path);
         recipient.tell(message, recipient);
     }
 

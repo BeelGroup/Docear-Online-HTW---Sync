@@ -1,16 +1,15 @@
 package org.docear.syncdaemon.fileactors;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.typesafe.config.Config;
 import org.apache.commons.io.FilenameUtils;
 import org.docear.syncdaemon.NeedsConfig;
 import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.typesafe.config.Config;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TempFileServiceImpl implements TempFileService, NeedsConfig {
 	
@@ -30,27 +29,33 @@ public class TempFileServiceImpl implements TempFileService, NeedsConfig {
 		return timeOutMillis;
 	}
 
-	@Override
+
+
+    @Override
 	public boolean isTempFile(FileMetaData filemetaData) {
-		String path = filemetaData.getPath();
-		
-		// file already timed out long enough. The file is no temp file any more.
-		if (timedOutFiles.containsKey(path)){
-			if ((timedOutFiles.get(path) + timeOutMillis) < System.currentTimeMillis()){
-				timedOutFiles.remove(path);
-				return false;
-			} else {
-				return true;
-			}
-		} 
-		
-		if (FilenameUtils.isExtension(path, tmpFileExtensions)){
-			timedOutFiles.put(path, System.currentTimeMillis());
-			return true;		
-		}
-		
-		return false;
+		return isTempFile(filemetaData.getPath());
 	}
+
+    @Override
+    public boolean isTempFile(String path) {
+        // file already timed out long enough. The file is no temp file any more.
+        if (timedOutFiles.containsKey(path)){
+            if ((timedOutFiles.get(path) + timeOutMillis) < System.currentTimeMillis()){
+                timedOutFiles.remove(path);
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        if (FilenameUtils.isExtension(path, tmpFileExtensions)){
+            timedOutFiles.put(path, System.currentTimeMillis());
+            return true;
+        }
+
+        return false;
+    }
+
 
 	@Override
 	public void setConfig(Config config) {

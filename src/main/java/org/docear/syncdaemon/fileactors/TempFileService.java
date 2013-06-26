@@ -6,4 +6,5 @@ public interface TempFileService {
 
 	int getTimeOutMillis();
 	boolean isTempFile(FileMetaData filemetaData);
+    boolean isTempFile(String path);
 }

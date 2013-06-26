@@ -152,7 +152,7 @@ public class FileChangeActorTestsITest {
         FileUtils.copyFile(testFile,fileOnFS);
 
         new JavaTestKit(actorSystem) {{
-            fileChangeActor.tell(new Messages.FileChangedLocally(project,FileMetaData.newFile(filePath,testFileHash,projectId)), getRef());
+            fileChangeActor.tell(new Messages.FileChangedLocally(project,filePath), getRef());
             //expectNoMsg(Duration.apply(5, TimeUnit.DAYS));
             expectNoMsg();
         }};
@@ -167,9 +167,8 @@ public class FileChangeActorTestsITest {
         indexDbService.save(FileMetaData.file(filePath, testFileHash, projectId, false, revision));
 
         //delete
-        final FileMetaData deletedLocalMeta = FileMetaData.file(filePath, "", projectId, true, revision);
         new JavaTestKit(actorSystem) {{
-            fileChangeActor.tell(new Messages.FileChangedLocally(project, deletedLocalMeta), getRef());
+            fileChangeActor.tell(new Messages.FileChangedLocally(project, filePath), getRef());
             expectNoMsg();
         }};
 
@@ -187,12 +186,10 @@ public class FileChangeActorTestsITest {
         //change file
         final String newContent = "This is a file";
         FileUtils.write(fileOnFS, newContent);
-        final String fileHash = hashAlgorithm.generate(fileOnFS);
 
         //tell actor, that file has changed
-        final FileMetaData newMeta = FileMetaData.file(filePath, fileHash, projectId, false, currentRev);
         new JavaTestKit(actorSystem) {{
-            fileChangeActor.tell(new Messages.FileChangedLocally(project, newMeta), getRef());
+            fileChangeActor.tell(new Messages.FileChangedLocally(project, filePath), getRef());
             expectNoMsg();
         }};
 
@@ -208,11 +205,10 @@ public class FileChangeActorTestsITest {
         indexDbService.save(serverMeta);
 
         fileOnFS.mkdirs();
-        final FileMetaData newMeta = FileMetaData.fromFS(hashAlgorithm,projectId,project.getRootPath(),filePath,false);
 
         //final FileMetaData newMeta = FileMetaData.folder(projectId,filePath,false,serverMeta.getRevision());
         new JavaTestKit(actorSystem) {{
-            fileChangeActor.tell(new Messages.FileChangedLocally(project, newMeta), getRef());
+            fileChangeActor.tell(new Messages.FileChangedLocally(project, filePath), getRef());
             expectNoMsg();
         }};
 
