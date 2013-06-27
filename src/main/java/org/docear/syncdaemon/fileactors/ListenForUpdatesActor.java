@@ -108,6 +108,8 @@ public class ListenForUpdatesActor extends UntypedActor {
 
                     // add project to projectIdRevisonMap for next iteration
                     this.indexDbService.setProjectRevision(localProject.getId(), entry.getValue());
+                    this.configService.addProject(localProject);
+                    this.configService.saveConfig();
                 }
             }
 
@@ -125,6 +127,8 @@ public class ListenForUpdatesActor extends UntypedActor {
 
                     // remove project from projectIdRevisonMap for next iteration
                     this.indexDbService.deleteProject(projectId);
+                    this.configService.deleteProject(localProject);
+                    this.configService.saveConfig();
                 }
             }
 

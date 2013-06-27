@@ -2,6 +2,8 @@ package org.docear.syncdaemon.fileactors;
 
 import akka.actor.ActorSystem;
 import akka.actor.UntypedActor;
+import net.contentobjects.jnotify.JNotify;
+import net.contentobjects.jnotify.JNotifyException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.docear.syncdaemon.client.ClientService;
@@ -10,6 +12,7 @@ import org.docear.syncdaemon.fileindex.FileMetaData;
 import org.docear.syncdaemon.hashing.HashAlgorithm;
 import org.docear.syncdaemon.hashing.SHA2;
 import org.docear.syncdaemon.indexdb.IndexDbService;
+import org.docear.syncdaemon.jnotify.Listener;
 import org.docear.syncdaemon.projects.Project;
 import org.docear.syncdaemon.users.User;
 import org.slf4j.LoggerFactory;
@@ -19,7 +22,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class FileChangeActor extends UntypedActor {
@@ -32,6 +37,7 @@ public class FileChangeActor extends UntypedActor {
     private ClientService clientService;
     private IndexDbService indexDbService;
     private User user;
+    private Set<Integer> jNotifyWatchIds = new HashSet<Integer>();
 
     public FileChangeActor(ClientService clientService, IndexDbService indexDbService, User user, TempFileService tempFileService) {
         this.clientService = clientService;
@@ -75,15 +81,24 @@ public class FileChangeActor extends UntypedActor {
         } else if (message instanceof Messages.ProjectDeleted) {
             final Messages.ProjectDeleted projectDeleted = (Messages.ProjectDeleted) message;
 
-            // remove files from FS
-            FileUtils.deleteDirectory(new File(projectDeleted.getProject().getRootPath()));
+            // (no deletion)
+            //FileUtils.deleteDirectory(new File(projectDeleted.getProject().getRootPath()));
 
             indexDbService.deleteProject(projectDeleted.getProject().getId());
         } else if (message instanceof Messages.ProjectAdded) {
             final Messages.ProjectAdded projectAdded = (Messages.ProjectAdded) message;
+            final Project project = projectAdded.getProject();
 
             // create root dir in FS
-            FileUtils.forceMkdir(new File(projectAdded.getProject().getRootPath()));
+            FileUtils.forceMkdir(new File(project.getRootPath()));
+
+            //create jNotifyWatch
+            final Listener listener = new Listener(project,getSelf());
+            try {
+                jNotifyWatchIds.add(JNotify.addWatch(project.getRootPath(), JNotify.FILE_ANY, true, listener));
+            } catch (JNotifyException e) {
+                logger.error("could not create watch on project folder!", e);
+            }
         }
     }
 
