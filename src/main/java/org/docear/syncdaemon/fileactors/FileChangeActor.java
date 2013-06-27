@@ -212,7 +212,7 @@ public class FileChangeActor extends UntypedActor {
         // check if file/folder has been deleted
         else if (fileMetaDataServer.isDeleted()) {
             logger.debug("fcos => deleted on server, deleting locally");
-            file.delete();
+            FileUtils.forceDelete(file);
             indexDbService.save(fileMetaDataServer);
         }
         // check if new file is a folder
