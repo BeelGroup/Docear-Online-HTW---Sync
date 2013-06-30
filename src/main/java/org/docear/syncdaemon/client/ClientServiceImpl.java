@@ -176,7 +176,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     public InputStream download(User user, FileMetaData currentServerMetaData) {
         final String urlEncodedPath = normalizePath(currentServerMetaData.getPath());
         // create request
-        final WebResource request = preparedResource(currentServerMetaData.getProjectId(), user).path("file").path(urlEncodedPath);
+        final WebResource request = preparedResource(currentServerMetaData.getProjectId(), user).path("file").path(urlEncodedPath).queryParam("zip","true");
 
         ClientResponse response = request.get(ClientResponse.class);
 
