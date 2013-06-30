@@ -28,11 +28,11 @@ public class FileChangeActorTestsITest {
 
     private final static HashAlgorithm hashAlgorithm = new SHA2();
     private final static User user = new User("Julius", "Julius-token");
-    private final static String projectId = "507f191e810c19729de860ea";
+    private static String projectId = null;
     private final static String rootPath = System.getProperty("user.home")+File.separator+"docear"+File.separator+"testProject";
     private final static String filePath = "/new.mm";
-    private final static Project project = new Project(projectId, rootPath, 0L);
-    private final static FileMetaData fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
+    private static Project project = null;
+    private static FileMetaData fileMetaData = null;
     private final static File fileOnFS = new File(rootPath+filePath);
     private static ActorSystem actorSystem;
     private static Daemon daemon;
@@ -50,6 +50,16 @@ public class FileChangeActorTestsITest {
         fileChangeActor = daemon.getFileChangeActor();
         clientService = daemon.service(ClientService.class);
         indexDbService = daemon.service(IndexDbService.class);
+
+        //get projectId of freeplane project
+        for (Project project : clientService.getProjects(user).getProjects()) {
+            if (project.getName().equals("Freeplane")) {
+                projectId = project.getId();
+            }
+        }
+
+        project = new Project(projectId,rootPath,0L);
+        fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
 
         //put file locally
         String pathOfClass = FileChangeActorTestsITest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -228,7 +238,8 @@ public class FileChangeActorTestsITest {
     }
 
     private Long getCurrentRevisionOnServerOfTestFile() {
-        return clientService.getCurrentFileMetaData(user, fileMetaData).getRevision();
+        FileMetaData responseMeta = clientService.getCurrentFileMetaData(user, fileMetaData);
+        return responseMeta != null ? responseMeta.getRevision() : 0L;
     }
 
 

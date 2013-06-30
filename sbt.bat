@@ -1,1 +1,1 @@
-java -Xmx512M -jar "sbtwrapper/sbt-launch.jar" %*
+java -Xmx512M -Xshare:off -jar "sbtwrapper/sbt-launch.jar" %*

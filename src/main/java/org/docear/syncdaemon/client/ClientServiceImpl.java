@@ -409,14 +409,14 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             final List<Project> projects = new ArrayList<Project>();
             for (final JsonNode projectJson : new ObjectMapper().readTree(project)) {
                 final String id = projectJson.get("id").textValue();
-                // final String name = metaJson.get("name").textValue();
+                final String name = projectJson.get("name").textValue();
                 final Long revision = projectJson.get("revision").longValue();
                 final List<String> user = new ArrayList<String>();
                 for (JsonNode node : projectJson.get("authorizedUsers")) {
                     user.add(node.toString());
                 }
 
-                projects.add(new Project(id, "", revision));
+                projects.add(new Project(id, "", revision,name));
             }
             return projects;
         } catch (Exception e) {

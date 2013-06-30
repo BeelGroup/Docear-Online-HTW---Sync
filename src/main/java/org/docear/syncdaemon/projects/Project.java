@@ -7,15 +7,21 @@ public class Project {
     // rootPath is normalized to current system. there is no end separator
     private String rootPath;
     private long revision;
+    private String name;
     
     public Project(){
     	// requiered for jackson xml generation
     }
 
     public Project(String id, String rootPath, long revision) {
+        this(id,rootPath,revision,"");
+    }
+
+    public Project(String id, String rootPath, long revision, String name) {
         this.id = id;
         this.revision = revision;
         this.rootPath = FilenameUtils.normalizeNoEndSeparator(FilenameUtils.separatorsToSystem(rootPath));
+        this.name = name;
     }
 
     public String getId() {
@@ -46,5 +52,9 @@ public class Project {
     	} else {
 	    	return p.substring(rp.length());
     	}
+    }
+
+    public String getName() {
+        return name;
     }
 }

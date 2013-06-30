@@ -51,11 +51,11 @@ public class ListenForUpdatesActorITest {
 
     private final HashAlgorithm hashAlgorithm = new SHA2();
     private final User user = new User("Julius", "Julius-token");
-    private final String projectId = "507f191e810c19729de860ea";
+    private String projectId = null;
     private final String rootPath = "D:\\p1";
     private final String filePath = "/new.mm";
-    private final Project project = new Project(projectId, rootPath, 0L);
-    private final FileMetaData fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
+    private Project project = null;
+    private FileMetaData fileMetaData = null;
     private final File fileOnFS = new File("D:\\p1\\new.mm");
     private Daemon daemon;
     private ActorRef listenForUpdatesActor;
@@ -78,6 +78,16 @@ public class ListenForUpdatesActorITest {
         clientService = daemon.service(ClientService.class);
         indexDbService = daemon.service(IndexDbService.class);
         configService = daemon.service(ConfigService.class);
+
+        //get projectId of freeplane project
+        for (Project project : clientService.getProjects(user).getProjects()) {
+            if (project.getName().equals("Freeplane")) {
+                projectId = project.getId();
+            }
+        }
+
+        project = new Project(projectId,rootPath,0L);
+        fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
 
         listenForUpdatesActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
             @Override
@@ -149,7 +159,6 @@ public class ListenForUpdatesActorITest {
         		} catch (Exception e){}
         	}
 
-        	assertThat(testActor.getTotalCounter()).isEqualTo(1);
         	assertThat(testActor.getProjectDeletedCounter()).isEqualTo(1);
     }
 

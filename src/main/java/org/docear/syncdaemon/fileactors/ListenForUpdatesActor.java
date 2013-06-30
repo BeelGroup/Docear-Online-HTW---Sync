@@ -132,7 +132,7 @@ public class ListenForUpdatesActor extends UntypedActor {
                 }
             }
 
-            // listen again
+            // schedule re-listening
             this.getSelf().tell(new Messages.ListenAgain(), this.getSelf());
         } else if (message instanceof Messages.ListenAgain) {
             logger.debug("Listening again for projectId " + indexDbService.getProjects().toString());
