@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +53,33 @@ public class Listener implements JNotifyListener {
         logger.debug("fileRenamed rootpath={}, oldName={}, newName={}", rootPath, oldName, newName);
         scheduleChange(rootPath,oldName);
         scheduleChange(rootPath,newName);
+
+        //when folder trigger rename for all sub files
+        final File file = new File(rootPath,newName);
+        if(file.isDirectory()) {
+            final String prePath = newName.indexOf(File.separator) == -1 ? "" : newName.substring(0,newName.lastIndexOf(File.separator));
+            final String oldPart = oldName.replace(prePath,"");
+            final String newPart = newName.replace(prePath,"");
+            folderRenameRecursion(rootPath,prePath,oldPart,newPart,"");
+        }
+    }
+
+    private void folderRenameRecursion(final String rootPath, final String prePath, final String oldName, final String newName, final String postPath) {
+        File folder = new File(rootPath,prePath+File.separator+newName);
+        if(!postPath.isEmpty())
+            folder = new File(folder,postPath);
+
+        for(final File fileInFolder : folder.listFiles()) {
+            final String namePart = fileInFolder.getName();
+            final String newPostPath = postPath+File.separator+namePart;
+
+
+            scheduleChange(rootPath,prePath+File.separator+oldName+newPostPath);
+            scheduleChange(rootPath,prePath+File.separator+newName+newPostPath);
+
+            if(fileInFolder.isDirectory())
+                folderRenameRecursion(rootPath, prePath, oldName, newName, newPostPath);
+        }
     }
 
     private void scheduleChange(String rootPath, String path) {
