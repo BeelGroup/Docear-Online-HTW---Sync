@@ -197,7 +197,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
     @Override
     public FileMetaData delete(User user, Project project, FileMetaData fileMetaData) {
-        final WebResource resource = preparedResource(project.getId(), user).path("file").path("delete");
+        final WebResource resource = preparedResource(project.getId(), user).path("delete_file");
         MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
         formData.add("path", normalizePath(fileMetaData.getPath(), false));
 
