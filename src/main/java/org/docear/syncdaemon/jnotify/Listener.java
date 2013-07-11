@@ -31,26 +31,26 @@ public class Listener implements JNotifyListener {
 
     @Override
     public void fileCreated(final int wd, final String rootPath, final String name) {
-        logger.debug("fileCreated {}/{}", rootPath, name);
+        //logger.debug("fileCreated {}/{}", rootPath, name);
         scheduleChange(rootPath,name);
 
     }
 
     @Override
     public void fileDeleted(final int wd, final String rootPath, final String name) {
-        logger.debug("fileDeleted {}/{}", rootPath, name);
+        //logger.debug("fileDeleted {}/{}", rootPath, name);
         scheduleChange(rootPath,name);
     }
 
     @Override
     public void fileModified(final int wd, final String rootPath, final String name) {
-        logger.debug("fileModified {}/{}", rootPath, name);
+        //logger.debug("fileModified {}/{}", rootPath, name);
         scheduleChange(rootPath,name);
     }
 
     @Override
     public void fileRenamed(final int wd, final String rootPath, final String oldName, final String newName) {
-        logger.debug("fileRenamed rootpath={}, oldName={}, newName={}", rootPath, oldName, newName);
+        //logger.debug("fileRenamed rootpath={}, oldName={}, newName={}", rootPath, oldName, newName);
         scheduleChange(rootPath,oldName);
         scheduleChange(rootPath,newName);
 
