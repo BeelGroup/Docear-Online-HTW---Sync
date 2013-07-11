@@ -10,12 +10,10 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
-import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.typesafe.config.Config;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.NullOutputStream;
 import org.docear.syncdaemon.NeedsConfig;
 import org.docear.syncdaemon.client.exceptions.NoFolderException;
 import org.docear.syncdaemon.fileindex.FileMetaData;
@@ -61,8 +59,8 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
         restClient = ApacheHttpClient.create();
 
-        PrintStream stream = new PrintStream(new NullOutputStream());
-        restClient.addFilter(new LoggingFilter(stream));
+//        PrintStream stream = new PrintStream(new NullOutputStream());
+//        restClient.addFilter(new LoggingFilter(stream));
         //restClient.addFilter(new LoggingFilter(System.out));
         //check for basic auth user
         try {
