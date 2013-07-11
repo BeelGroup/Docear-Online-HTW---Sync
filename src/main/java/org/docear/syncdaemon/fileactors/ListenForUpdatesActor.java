@@ -141,7 +141,8 @@ public class ListenForUpdatesActor extends UntypedActor {
                 if (restartResponse != null) {
                     this.getSelf().tell(restartResponse, this.getSelf());
                 } else {
-                    system.scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), this.getSelf(), new Messages.ListenAgain(), system.dispatcher());
+                    logger.error("problem with client service. Retry in 10 seconds. ");
+                    system.scheduler().scheduleOnce(Duration.create(10, TimeUnit.SECONDS), this.getSelf(), new Messages.ListenAgain(), system.dispatcher());
                 }
             } catch (Exception e) {
                 logger.error("problem with client service. Retry in 10 seconds. ", e);
