@@ -9,8 +9,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
+import com.sun.jersey.client.apache.config.DefaultApacheHttpClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.typesafe.config.Config;
 import org.apache.commons.io.IOUtils;
@@ -57,7 +60,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             throw new RuntimeException(e);
         }
 
-        restClient = ApacheHttpClient.create();
+        restClient = ApacheHttpClient.create(getClientConfig());
 
 //        PrintStream stream = new PrintStream(new NullOutputStream());
 //        restClient.addFilter(new LoggingFilter(stream));
@@ -75,6 +78,14 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
         // generate service url
         serviceUrl = config.getString("daemon.client.baseurl") + "/" + config.getString("daemon.client.api.version");
+    }
+
+    private ClientConfig getClientConfig() {
+        ClientConfig config = new DefaultClientConfig();
+
+        config.getProperties().put(
+                DefaultApacheHttpClientConfig.PROPERTY_CHUNKED_ENCODING_SIZE, 0);
+        return config;
     }
 
     // ClientService implementation
