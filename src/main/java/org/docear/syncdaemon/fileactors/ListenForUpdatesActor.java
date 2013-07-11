@@ -33,6 +33,7 @@ public class ListenForUpdatesActor extends UntypedActor {
     private ClientService clientService;
     private IndexDbService indexDbService;
     private ActorRef fileChangeActor;
+    private ActorSystem system = ActorSystem.apply();
 
 
     public ListenForUpdatesActor(User user, ClientService clientService, ActorRef fileChangeActor, IndexDbService indexDb, ConfigService configService) {
@@ -50,7 +51,7 @@ public class ListenForUpdatesActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof Messages.StartListening) {
-        	logger.debug("Start listening for projects");
+            logger.debug("Start listening for projects");
             Messages.StartListening startListing = (Messages.StartListening) message;
             Map<String, Long> projectIdRevisionMap = startListing.getProjectIdRevisionMap();
             if (projectIdRevisionMap == null) {
@@ -75,7 +76,7 @@ public class ListenForUpdatesActor extends UntypedActor {
                     List<FileMetaData> fmds = delta.getServerMetaDatas();
 
                     for (FileMetaData fmd : fmds) {
-                    	logger.debug("Updated file path=" + fmd.getPath() + " hash=" + fmd.getHash());
+                        logger.debug("Updated file path=" + fmd.getPath() + " hash=" + fmd.getHash());
                         FileChangedOnServer changeMessage = new FileChangedOnServer(localProject, fmd);
                         fileChangeActor.tell(changeMessage, this.getSelf());
                     }
@@ -90,9 +91,9 @@ public class ListenForUpdatesActor extends UntypedActor {
                 for (Entry<String, Long> entry : newProjects.entrySet()) {
                     final String projectId = entry.getKey();
                     logger.debug("New Project: " + projectId);
-                    final Project onlineProject = clientService.getProject(user,projectId);
-                    final String rootPath = configService.getSyncDaemonHome().toString() + "/" +onlineProject.getName()+"_"+projectId;
-                    final Project localProject = new Project(projectId,rootPath,0L,onlineProject.getName());
+                    final Project onlineProject = clientService.getProject(user, projectId);
+                    final String rootPath = configService.getSyncDaemonHome().toString() + "/" + onlineProject.getName() + "_" + projectId;
+                    final Project localProject = new Project(projectId, rootPath, 0L, onlineProject.getName());
 
                     // tell fileChangeActor that there is a new project to create init folder and index db entrys
                     fileChangeActor.tell(new ProjectAdded(localProject), this.getSelf());
@@ -102,7 +103,7 @@ public class ListenForUpdatesActor extends UntypedActor {
                     List<FileMetaData> fmds = delta.getServerMetaDatas();
 
                     for (FileMetaData fmd : fmds) {
-                    	logger.debug("New file in new project path=" + fmd.getPath() + " hash=" + fmd.getHash());
+                        logger.debug("New file in new project path=" + fmd.getPath() + " hash=" + fmd.getHash());
                         FileChangedOnServer changeMessage = new FileChangedOnServer(localProject, fmd);
                         fileChangeActor.tell(changeMessage, this.getSelf());
                     }
@@ -135,20 +136,25 @@ public class ListenForUpdatesActor extends UntypedActor {
             this.getSelf().tell(new Messages.ListenAgain(), this.getSelf());
         } else if (message instanceof Messages.ListenAgain) {
             logger.debug("Listening again for projectId " + indexDbService.getProjects().toString());
-            ListenForUpdatesResponse restartResponse = clientService.listenForUpdates(user, indexDbService.getProjects(), null);
-
-            if (restartResponse != null) {
-                this.getSelf().tell(restartResponse, this.getSelf());
-            } else {
-                ActorSystem system = ActorSystem.apply();
-                system.scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), this.getSelf(), new Messages.ListenAgain(), system.dispatcher());
+            try {
+                ListenForUpdatesResponse restartResponse = clientService.listenForUpdates(user, indexDbService.getProjects(), null);
+                if (restartResponse != null) {
+                    this.getSelf().tell(restartResponse, this.getSelf());
+                } else {
+                    system.scheduler().scheduleOnce(Duration.create(60, TimeUnit.SECONDS), this.getSelf(), new Messages.ListenAgain(), system.dispatcher());
+                }
+            } catch (Exception e) {
+                logger.error("problem with client service. Retry in 10 seconds. ", e);
+                system.scheduler().scheduleOnce(Duration.create(10, TimeUnit.SECONDS), this.getSelf(), new Messages.ListenAgain(), system.dispatcher());
             }
+
+
         }
     }
 
     private Project getProject(String projectId) throws PersistenceException {
         final Project confProj = configService.getProject(projectId);
-        final Project mergedProj = new Project(projectId,confProj.getRootPath(),indexDbService.getProjectRevision(projectId),confProj.getName());
+        final Project mergedProj = new Project(projectId, confProj.getRootPath(), indexDbService.getProjectRevision(projectId), confProj.getName());
         return mergedProj;
     }
 }
