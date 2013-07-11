@@ -93,7 +93,7 @@ public class FileChangeActor extends UntypedActor {
             FileUtils.forceMkdir(new File(project.getRootPath()));
 
             //create jNotifyWatch
-            final Listener listener = new Listener(project,getSelf());
+            final Listener listener = new Listener(project, getSelf());
             try {
                 jNotifyWatchIds.add(JNotify.addWatch(project.getRootPath(), JNotify.FILE_ANY, true, listener));
             } catch (JNotifyException e) {
@@ -212,7 +212,11 @@ public class FileChangeActor extends UntypedActor {
         // check if file/folder has been deleted
         else if (fileMetaDataServer.isDeleted()) {
             logger.debug("fcos => deleted on server, deleting locally");
-            FileUtils.forceDelete(file);
+
+            //delete if not already deleted
+            if(fileMetaDataDB != null && !fileMetaDataDB.isDeleted())
+                FileUtils.forceDelete(file);
+
             indexDbService.save(fileMetaDataServer);
         }
         // check if new file is a folder
