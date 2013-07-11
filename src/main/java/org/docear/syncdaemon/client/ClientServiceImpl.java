@@ -60,11 +60,9 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             throw new RuntimeException(e);
         }
 
-        restClient = ApacheHttpClient.create(getClientConfig());
+        //restClient = ApacheHttpClient.create(getClientConfig());
+        restClient = ApacheHttpClient.create();
 
-//        PrintStream stream = new PrintStream(new NullOutputStream());
-//        restClient.addFilter(new LoggingFilter(stream));
-        //restClient.addFilter(new LoggingFilter(System.out));
         //check for basic auth user
         try {
             final String basicAuthUser = config.getString("daemon.client.basicauth.username");
