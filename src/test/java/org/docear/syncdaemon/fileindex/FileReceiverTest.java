@@ -19,7 +19,7 @@ public class FileReceiverTest {
 		String projectId = "-1";
 		
 		String projectPath = System.getProperty("user.dir") + "/" + "src/test/resources/Testprojects/Project_0";
-		Project project0 = new Project(projectId, projectPath, -1);
+		Project project0 = new Project(projectId, projectPath, -1,"name");
 		
 		// force empty folders to be available
 		FileUtils.forceMkdir(new File(projectPath + "/folder0/folder01"));

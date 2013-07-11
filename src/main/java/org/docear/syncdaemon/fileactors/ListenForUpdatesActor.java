@@ -88,10 +88,11 @@ public class ListenForUpdatesActor extends UntypedActor {
             // send new projects to filechangeactor
             if (newProjects != null && newProjects.size() > 0) {
                 for (Entry<String, Long> entry : newProjects.entrySet()) {
-                    logger.debug("New Project: " + entry.getKey());
-                    Project localProject = new Project(entry.getKey(),
-                            configService.getSyncDaemonHome().toString() + "/" + entry.getKey(),
-                            0);
+                    final String projectId = entry.getKey();
+                    logger.debug("New Project: " + projectId);
+                    final Project onlineProject = clientService.getProject(user,projectId);
+                    final String rootPath = configService.getSyncDaemonHome().toString() + "/" +onlineProject.getName()+"_"+projectId;
+                    final Project localProject = new Project(projectId,rootPath,0L,onlineProject.getName());
 
                     // tell fileChangeActor that there is a new project to create init folder and index db entrys
                     fileChangeActor.tell(new ProjectAdded(localProject), this.getSelf());
@@ -118,9 +119,7 @@ public class ListenForUpdatesActor extends UntypedActor {
             if (deletedProjects != null) {
                 for (String projectId : deletedProjects) {
                     logger.debug("Deleted Project: " + projectId);
-                    Project localProject = new Project(projectId,
-                            configService.getProjectRootPath(projectId),
-                            0L);
+                    final Project localProject = getProject(projectId);
 
                     // tell fileChangeActor that there is a deleted project
                     fileChangeActor.tell(new ProjectDeleted(localProject), this.getSelf());
@@ -148,7 +147,9 @@ public class ListenForUpdatesActor extends UntypedActor {
     }
 
     private Project getProject(String projectId) throws PersistenceException {
-        return new Project(projectId, configService.getProjectRootPath(projectId), indexDbService.getProjectRevision(projectId));
+        final Project confProj = configService.getProject(projectId);
+        final Project mergedProj = new Project(projectId,confProj.getRootPath(),indexDbService.getProjectRevision(projectId),confProj.getName());
+        return mergedProj;
     }
 }
 

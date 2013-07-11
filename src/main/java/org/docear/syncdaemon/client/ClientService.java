@@ -29,6 +29,8 @@ public interface ClientService {
 
     ProjectResponse getProjects(User user);
 
+    Project getProject(User user, String projectId);
+
     FolderMetaData getFolderMetaData(User user, FileMetaData folderMetaData);
 
     ListenForUpdatesResponse listenForUpdates(User user, Map<String, Long> projectIdRevisionMap, ActorRef actorRef);

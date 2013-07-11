@@ -45,7 +45,7 @@ public class ConfigServiceImplTest {
     
     @Test
     public void addProject() throws Exception {
-    	Project project = new Project("thisIsAId", "/root/Path", 8L);
+    	Project project = new Project("thisIsAId", "/root/Path", 8L, "name");
     	service.addProject(project);
     	assertThat(service.getProjects().size()).isEqualTo(1);
     	assertThat(service.getProjectRootPath(project.getId())).isEqualTo(project.getRootPath());
@@ -53,7 +53,7 @@ public class ConfigServiceImplTest {
     
     @Test
     public void deleteProject() throws Exception {
-    	Project project = new Project("thisIsAId", "/root/Path", 8L);
+    	Project project = new Project("thisIsAId", "/root/Path", 8L, "name");
     	service.addProject(project);
     	service.deleteProject(project);
     	assertThat(service.getProjects().size()).isEqualTo(0);
@@ -62,7 +62,7 @@ public class ConfigServiceImplTest {
     
     @Test
     public void saveProject() throws Exception {
-    	Project project = new Project("thisIsTheId", "/root/Path", 8L);
+    	Project project = new Project("thisIsTheId", "/root/Path", 8L, "name");
     	service.addProject(project);
     	service.saveConfig();
     	XmlMapper xmlMapper = new XmlMapper();

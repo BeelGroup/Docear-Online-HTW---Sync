@@ -65,7 +65,16 @@ public class ConfigServiceImpl implements ConfigService, NeedsConfig {
 		return localConf.getProjects();
 	}
 
-	@Override
+    @Override
+    public Project getProject(String projectId) {
+        for(Project project : localConf.getProjects()) {
+            if(projectId.equals(project.getId()))
+                return project;
+        }
+        return null;
+    }
+
+    @Override
 	public void addProject(Project project) {
         localConf.getProjects().add(project);
 		saveConfig();

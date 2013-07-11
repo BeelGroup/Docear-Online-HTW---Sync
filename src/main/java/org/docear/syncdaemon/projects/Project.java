@@ -13,9 +13,9 @@ public class Project {
     	// requiered for jackson xml generation
     }
 
-    public Project(String id, String rootPath, long revision) {
-        this(id,rootPath,revision,"");
-    }
+//    public Project(String id, String rootPath, long revision) {
+//        this(id,rootPath,revision,"");
+//    }
 
     public Project(String id, String rootPath, long revision, String name) {
         this.id = id;
@@ -31,7 +31,11 @@ public class Project {
     public String getRootPath() {
         return rootPath;
     }
-    
+
+    public void setRootPath(String rootPath) {
+        this.rootPath = rootPath;
+    }
+
     public long getRevision() {
 		return revision;
 	}

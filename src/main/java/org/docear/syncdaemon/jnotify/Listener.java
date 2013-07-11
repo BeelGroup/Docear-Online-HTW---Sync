@@ -84,7 +84,7 @@ public class Listener implements JNotifyListener {
 
     private void scheduleChange(String rootPath, String path) {
         final SendChangeRunnable sendChangeRunnable = new SendChangeRunnable(project,recipient,path);
-        final Cancellable cancellable = system.scheduler().scheduleOnce(Duration.apply(2, TimeUnit.SECONDS), sendChangeRunnable,system.dispatcher());
+        final Cancellable cancellable = system.scheduler().scheduleOnce(Duration.apply(500, TimeUnit.MILLISECONDS), sendChangeRunnable,system.dispatcher());
         putInCancellableMap(rootPath,path,cancellable);
     }
 

@@ -65,8 +65,8 @@ public class ClientServiceITest {
     @Before
     public void setUp() throws FileNotFoundException {
         final FileMetaData currentServerMeta = clientService.getCurrentFileMetaData(user, fileMetaData);
-        if (currentServerMeta.isDeleted())
-            clientService.upload(user, project, FileMetaData.file(fileMetaData.getPath(), fileMetaData.getHash(), fileMetaData.getProjectId(), false, currentServerMeta.getRevision()));
+        if (currentServerMeta == null || currentServerMeta.isDeleted())
+            clientService.upload(user, project, FileMetaData.file(fileMetaData.getPath(), fileMetaData.getHash(), fileMetaData.getProjectId(), false, currentServerMeta == null ? 0L : currentServerMeta.getRevision()));
     }
 
     @Test

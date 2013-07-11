@@ -58,7 +58,7 @@ public class FileChangeActorTestsITest {
             }
         }
 
-        project = new Project(projectId,rootPath,0L);
+        project = new Project(projectId,rootPath,0L,"name");
         fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
 
         //put file locally

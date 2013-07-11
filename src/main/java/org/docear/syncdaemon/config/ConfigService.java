@@ -9,6 +9,7 @@ import java.util.List;
 public interface ConfigService {
 
 	List<Project> getProjects();
+    Project getProject(String projectId);
 	void addProject(Project project);
 	void deleteProject(Project project);
 	String getProjectRootPath(String projectId);

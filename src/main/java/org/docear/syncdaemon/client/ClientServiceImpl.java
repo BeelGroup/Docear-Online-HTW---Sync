@@ -10,10 +10,12 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.typesafe.config.Config;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.NullOutputStream;
 import org.docear.syncdaemon.NeedsConfig;
 import org.docear.syncdaemon.client.exceptions.NoFolderException;
 import org.docear.syncdaemon.fileindex.FileMetaData;
@@ -41,11 +43,10 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class ClientServiceImpl implements ClientService, NeedsConfig {
+    private static final Logger logger = LoggerFactory.getLogger(ClientServiceImpl.class);
     private Config config;
     private String serviceUrl;
     private Client restClient;
-
-    private static final Logger logger = LoggerFactory.getLogger(ClientServiceImpl.class);
 
     private void intialize() {
 
@@ -60,6 +61,8 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
 
         restClient = ApacheHttpClient.create();
 
+        PrintStream stream = new PrintStream(new NullOutputStream());
+        restClient.addFilter(new LoggingFilter(stream));
         //restClient.addFilter(new LoggingFilter(System.out));
         //check for basic auth user
         try {
@@ -97,7 +100,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             final File file = new File(absoluteFilePath);
             final String urlEncodedFilePath = normalizePath(fileMetaData.getPath());
 
-           // byte[] bytes = IOUtils.toByteArray(file.toURI());
+            // byte[] bytes = IOUtils.toByteArray(file.toURI());
             fileInStream = new FileInputStream(absoluteFilePath);
 
 
@@ -112,11 +115,10 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
             // create request
             final WebResource request =
                     preparedResource(fileMetaData.getProjectId(), user).path("file").path(urlEncodedFilePath)
-                    .queryParam("parentRev", "" + fileMetaData.getRevision())
-                    .queryParam("zip", "false").queryParam("contentLength",file.length()+"");
+                            .queryParam("parentRev", "" + fileMetaData.getRevision())
+                            .queryParam("zip", "false").queryParam("contentLength", file.length() + "");
 
             response = request.type(MediaType.APPLICATION_OCTET_STREAM).put(ClientResponse.class, fileInStream);
-
 
 
         } catch (IOException e) {
@@ -178,7 +180,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     public InputStream download(User user, FileMetaData currentServerMetaData) {
         final String urlEncodedPath = normalizePath(currentServerMetaData.getPath());
         // create request
-        final WebResource request = preparedResource(currentServerMetaData.getProjectId(), user).path("file").path(urlEncodedPath).queryParam("zip","true");
+        final WebResource request = preparedResource(currentServerMetaData.getProjectId(), user).path("file").path(urlEncodedPath).queryParam("zip", "true");
 
         ClientResponse response = request.get(ClientResponse.class);
 
@@ -226,6 +228,32 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
     }
 
     @Override
+    public Project getProject(User user, String projectId) {
+        // create request
+        final WebResource request = preparedResource(user).path("project").path(projectId);
+
+        ClientResponse response = request.get(ClientResponse.class);
+
+        // on success
+        if (response.getStatus() == 200)
+            try {
+                final JsonNode jsonNode = new ObjectMapper().readTree(response.getEntity(String.class));
+                final String name = jsonNode.get("name").textValue();
+                final long revision = jsonNode.get("revision").longValue();
+                final Project project = new Project(projectId,"",revision,name);
+                return project;
+            } catch (JsonMappingException e) {
+                throw new RuntimeException(e);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        else
+            return null;
+    }
+
+    @Override
     public FolderMetaData getFolderMetaData(User user, FileMetaData folderMetaData) {
         final String projectId = folderMetaData.getProjectId();
 
@@ -256,8 +284,8 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
         if (clientResponse.getStatus() == 200) {
             try {
                 final ListenForUpdatesResponse response = new ObjectMapper().readValue(clientResponse.getEntityInputStream(), ListenForUpdatesResponse.class);
-                if(actorRef != null)
-                    actorRef.tell(response,null);
+                if (actorRef != null)
+                    actorRef.tell(response, null);
                 return response;
             } catch (IOException e) {
                 throw new RuntimeException("problem parsing listenForUpdatesResult");
@@ -418,7 +446,7 @@ public class ClientServiceImpl implements ClientService, NeedsConfig {
                     user.add(node.toString());
                 }
 
-                projects.add(new Project(id, "", revision,name));
+                projects.add(new Project(id, "", revision, name));
             }
             return projects;
         } catch (Exception e) {

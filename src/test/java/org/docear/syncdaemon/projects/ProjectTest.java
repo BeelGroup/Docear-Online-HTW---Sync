@@ -18,7 +18,7 @@ public class ProjectTest {
 	@Test
 	public void testToRelativePathByProject(){
 		String rootPath = "D:/foo/bar";
-		Project project = new Project("-1", rootPath, -1);
+		Project project = new Project("-1", rootPath, -1,"name");
 		String relativPath = "test/test/foo/bar/";
 		String path = rootPath + relativPath;
 		String result = project.toRelativePath(path);
@@ -28,7 +28,7 @@ public class ProjectTest {
 	@Test
 	public void testToRelativePathByProjectFail(){
 		String rootPath = "D:/foo/bar";
-		Project project = new Project("-1", rootPath, -1);
+		Project project = new Project("-1", rootPath, -1,"name");
 		String path = "ThisIsNotAValidRootPath";
 		String result = project.toRelativePath(path);
 		assertThat(result).isNull();

@@ -86,7 +86,7 @@ public class ListenForUpdatesActorITest {
             }
         }
 
-        project = new Project(projectId,rootPath,0L);
+        project = new Project(projectId,rootPath,0L,"name");
         fileMetaData = FileMetaData.file(filePath, "", projectId, false, 0L);
 
         listenForUpdatesActor = actorSystem.actorOf(new Props(new UntypedActorFactory() {
@@ -141,7 +141,7 @@ public class ListenForUpdatesActorITest {
 
         	indexDbService.setProjectRevision(projectId, revision);
         	assertThat(indexDbService.getProjectRevision(projectId)).isEqualTo(revision);
-        	configService.addProject(new Project(projectId, "/root/path/", revision));
+        	configService.addProject(new Project(projectId, "/root/path/", revision,"name"));
 
     		try {
     			Thread.sleep(5000);

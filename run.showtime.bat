@@ -1,0 +1,1 @@
+sbt -Ddaemon.client.baseurl=https://192.168.0.7:4443/api run
